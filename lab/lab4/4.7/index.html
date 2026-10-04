@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Makes the website responsive on phones and tablets -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Appliance Energy Consumption | Home</title>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ==================== NAVIGATION ==================== -->
+    <header class="site-header">
+
+        <nav class="navbar">
+
+            <!-- Logo -->
+            <a href="index.html" class="logo-link">
+                <img
+                    src="img/PowerIcon.png"
+                    alt="Power Energy Logo"
+                    class="logo"
+                >
+            </a>
+
+            <!-- Navigation links -->
+            <ul class="nav-links">
+                <li>
+                    <a href="index.html" class="active">Home</a>
+                </li>
+
+                <li>
+                    <a href="televisions.html">Televisions</a>
+                </li>
+
+                <li>
+                    <a href="about.html">About Us</a>
+                </li>
+            </ul>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main>
+
+        <!-- Hero section -->
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">AUSTRALIAN APPLIANCE ENERGY</p>
+
+                <h1>
+                    Understanding Your
+                    <span>Energy Consumption</span>
+                </h1>
+
+                <p class="hero-text">
+                    Learn how everyday household appliances contribute
+                    to electricity consumption and discover simple ways
+                    to use energy more efficiently.
+                </p>
+
+                <a href="televisions.html" class="button">
+                    Explore Televisions
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <section class="content-section">
+
+            <div class="section-heading">
+                <p class="eyebrow">THE AUSTRALIAN MARKET</p>
+
+                <h2>
+                    Appliance energy consumption in Australia
+                </h2>
+
+                <p>
+                    Household appliances are an important part of
+                    everyday life in Australia. From televisions and
+                    refrigerators to washing machines and air
+                    conditioners, electrical appliances can contribute
+                    significantly to household electricity usage.
+                </p>
+            </div>
+
+
+            <!-- Information cards -->
+            <div class="card-grid">
+
+                <article class="info-card">
+                    <div class="card-number">01</div>
+
+                    <h3>Energy Usage</h3>
+
+                    <p>
+                        The amount of electricity an appliance consumes
+                        depends on factors such as its power rating,
+                        operating time and frequency of use.
+                    </p>
+                </article>
+
+
+                <article class="info-card">
+                    <div class="card-number">02</div>
+
+                    <h3>Energy Efficiency</h3>
+
+                    <p>
+                        Energy-efficient appliances can provide similar
+                        functionality while using less electricity during
+                        normal operation.
+                    </p>
+                </article>
+
+
+                <article class="info-card">
+                    <div class="card-number">03</div>
+
+                    <h3>Smart Choices</h3>
+
+                    <p>
+                        Understanding energy consumption can help
+                        households make more informed decisions when
+                        purchasing and using appliances.
+                    </p>
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- ==================== ENERGY CALCULATOR ==================== -->
+        <section class="content-section calculator-section">
+
+            <div class="section-heading">
+
+
+                <h2>
+                    Appliance Energy Calculator
+                </h2>
+
+                <p>
+                    Enter your appliance's power usage, average daily usage,
+                    and electricity price to estimate its energy consumption
+                    and cost.
+                </p>
+
+            </div>
+
+
+            <div class="calculator">
+
+            <!-- Calculator form -->
+                <form id="energy-form">
+
+                <!-- Power input -->
+                <div class="form-group">
+
+                    <label for="power">
+                        Appliance power usage (watts)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="power"
+                        name="power"
+                        placeholder="e.g. 100"
+                        min="0"
+                        step="any"
+                    >
+
+                    <small>
+                        Enter the appliance's power rating in watts.
+                    </small>
+
+                </div>
+
+                <!-- Hours input -->
+                <div class="form-group">
+
+                    <label for="hours">
+                        Average hours of use per day
+                    </label>
+
+                    <input
+                        type="number"
+                        id="hours"
+                        name="hours"
+                        placeholder="e.g. 5"
+                        min="0"
+                        max="24"
+                        step="any"
+                    >
+
+                    <small>
+                        Enter how many hours the appliance is used each day.
+                    </small>
+
+                </div>
+
+
+                <!-- Electricity price -->
+                <div class="form-group">
+
+                    <label for="price">
+                        Electricity price (cents per kWh)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        placeholder="e.g. 30"
+                        min="0"
+                        step="any"
+                    >
+
+                    <small>
+                        Enter your electricity price in cents per kWh.
+                    </small>
+
+                </div>
+
+
+                <!-- Submit button -->
+                <button
+                    type="submit"
+                    class="calculator-button"
+                >
+                    Calculate Energy Usage
+                </button>
+
+            </form>
+
+
+            <!-- Results -->
+            <div
+                id="calculator-results"
+                class="calculator-results"
+                aria-live="polite"
+            >
+
+                <h3>
+                    Your Results
+                </h3>
+
+                <p>
+                    Enter your appliance information above and click
+                    "Calculate Energy Usage".
+                </p>
+
+            </div>
+
+        </div>
+
+        </section>
+
+        <!-- ==================== ENERGY EXPLANATION ==================== -->
+        <section class="dark-section">
+
+            <div class="dark-section-content">
+
+                <div>
+                    <p class="eyebrow">THE BASICS</p>
+
+                    <h2>
+                        What determines energy consumption?
+                    </h2>
+                </div>
+
+                <div>
+                    <p>
+                        Electrical energy consumption is commonly
+                        expressed in kilowatt-hours (kWh). An appliance
+                        with a higher power rating generally uses more
+                        energy when operated for the same amount of time.
+                    </p>
+
+                    <p>
+                        For example, an appliance rated at 100 watts
+                        operating for 10 hours would use approximately
+                        1 kilowatt-hour of electricity.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ==================== TELEVISION MARKET ==================== -->
+        <section class="content-section chart-section">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">AUSTRALIAN TELEVISION MARKET</p>
+
+                <h2>
+                    Amount of models by brand selling in Australia
+                </h2>
+
+                <p>
+                    This chart shows the number of television models
+                    available from each brand in the Australian market.
+                </p>
+
+            </div>
+
+            <div class="responsive-svg-container"></div>
+
+        </section>
+
+        <!-- ==================== FAQ ==================== -->
+        <section class="content-section faq-section">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">FAQ</p>
+
+                <h2>
+                    Frequently Asked Questions
+                </h2>
+
+                <p>
+                    Click a question to reveal the answer.
+                </p>
+
+            </div>
+
+
+            <div class="faq-container">
+
+                <!-- FAQ item -->
+                <div class="faq-item">
+
+                    <button class="faq-question">
+                        <span>
+                            What is appliance energy consumption?
+                        </span>
+
+                        <span class="faq-icon">+</span>
+                    </button>
+
+                    <div class="faq-answer">
+                        <p>
+                            Appliance energy consumption refers to the
+                            amount of electrical energy an appliance uses
+                            while operating. It is commonly measured in
+                            kilowatt-hours (kWh).
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- FAQ item -->
+                <div class="faq-item">
+
+                    <button class="faq-question">
+                        <span>
+                            Which factors affect energy consumption?
+                        </span>
+
+                        <span class="faq-icon">+</span>
+                    </button>
+
+                    <div class="faq-answer">
+                        <p>
+                            Energy consumption can be affected by an
+                            appliance's power rating, how long it operates,
+                            how frequently it is used and its energy
+                            efficiency.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- FAQ item -->
+                <div class="faq-item">
+
+                    <button class="faq-question">
+                        <span>
+                            Why should I care about energy efficiency?
+                        </span>
+
+                        <span class="faq-icon">+</span>
+                    </button>
+
+                    <div class="faq-answer">
+                        <p>
+                            Using energy efficiently can help reduce
+                            electricity consumption and may contribute to
+                            lower household electricity costs.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- FAQ item -->
+                <div class="faq-item">
+
+                    <button class="faq-question">
+                        <span>
+                            Does leaving an appliance on use electricity?
+                        </span>
+
+                        <span class="faq-icon">+</span>
+                    </button>
+
+                    <div class="faq-answer">
+                        <p>
+                            Yes. When an appliance remains powered on, it
+                            may continue consuming electricity. Some
+                            appliances can also consume a small amount of
+                            standby power even when they are not actively
+                            being used.
+                        </p>
+                    </div>  
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="site-footer">
+
+        <p>
+            &copy; <span id="current-year"></span>
+            Quang Nguyen
+        </p>
+
+        <p>
+            This website was developed with the assistance of
+            Generative AI.
+        </p>
+
+    </footer>
+
+
+    <!-- External JavaScript -->
+    <script src="js/script.js"></script>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

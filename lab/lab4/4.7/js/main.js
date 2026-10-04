@@ -20,8 +20,9 @@ d3.csv("data/AUS_TV_models.csv", d => {
     console.log(d3.min(data, d => d.count));
     console.log(d3.extent(data, d => d.count));
     data.sort((a, b) => b.count - a.count);
-    console.log(data); 
-    drawBarChart(data); 
+    const top20Brands = data.slice(0, 20);
+    console.log(top20Brands);
+    drawBarChart(top20Brands);
 }); 
 
 /*Draw bar chart*/

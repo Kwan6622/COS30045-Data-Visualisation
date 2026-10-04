@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Appliance Energy Consumption | Televisions</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ==================== NAVIGATION ==================== -->
+    <header class="site-header">
+
+        <nav class="navbar">
+
+            <!-- Logo -->
+            <a href="index.html" class="logo-link">
+
+                <img
+                    src="img/PowerIcon.png"
+                    alt="Power Energy Logo"
+                    class="logo"
+                >
+
+            </a>
+
+
+            <!-- Navigation -->
+            <ul class="nav-links">
+
+                <li>
+                    <a href="index.html">Home</a>
+                </li>
+
+                <li>
+                    <a href="televisions.html" class="active">
+                        Televisions
+                    </a>
+                </li>
+
+                <li>
+                    <a href="about.html">About Us</a>
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ==================== MAIN ==================== -->
+    <main>
+
+        <!-- Page hero -->
+        <section class="page-hero">
+
+            <p class="eyebrow">APPLIANCE PROFILE</p>
+
+            <h1>
+                Television Energy Consumption
+            </h1>
+
+            <p>
+                Explore some of the factors that influence how much
+                energy a television uses in an Australian household.
+            </p>
+
+        </section>
+
+
+        <!-- ==================== INTRO ==================== -->
+        <section class="content-section">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">TELEVISION BASICS</p>
+
+                <h2>
+                    How much energy does a television use?
+                </h2>
+
+                <p>
+                    Television energy consumption can vary considerably
+                    depending on the display technology, screen size,
+                    brightness settings and amount of time the television
+                    is used.
+                </p>
+
+            </div>
+
+
+            <!-- Cards -->
+            <div class="card-grid">
+
+                <article class="info-card">
+
+                    <div class="card-number">01</div>
+
+                    <h3>Screen Size</h3>
+
+                    <p>
+                        Larger televisions can require more electricity
+                        because they typically have larger display areas
+                        and may require more power during operation.
+                    </p>
+
+                    <button
+                        class="text-button chart-trigger"
+                        type="button"
+                        data-chart="screen-size"
+                        aria-haspopup="dialog"
+                    >
+                        Explore more
+                    </button>
+
+                </article>
+
+
+                <article class="info-card">
+
+                    <div class="card-number">02</div>
+
+                    <h3>Display Technology</h3>
+
+                    <p>
+                        Different display technologies can have different
+                        power requirements. Modern televisions may also
+                        include energy-saving features.
+                    </p>
+
+                    <button
+                        class="text-button chart-trigger"
+                        type="button"
+                        data-chart="display-technology"
+                        aria-haspopup="dialog"
+                    >
+                        Explore more
+                    </button>
+
+                </article>
+
+
+                <article class="info-card">
+
+                    <div class="card-number">03</div>
+
+                    <h3>Usage Time</h3>
+
+                    <p>
+                        A television that is used for several hours every
+                        day will generally consume more electricity over
+                        time than one used occasionally.
+                    </p>
+
+                </article>
+
+            </div>
+        </section>
+        <!-- ==================== ENERGY CALCULATION ==================== -->
+        <section class="dark-section">
+
+            <div class="dark-section-content">
+
+                <div>
+
+                    <p class="eyebrow">
+                        SIMPLE CALCULATION
+                    </p>
+
+                    <h2>
+                        Understanding kWh
+                    </h2>
+
+                </div>
+
+
+                <div>
+
+                    <p>
+                        A simple way to estimate energy consumption is
+                        to multiply an appliance's power consumption by
+                        the number of hours it operates.
+                    </p>
+
+                    <div class="formula-box">
+
+                        <strong>
+                            Energy (kWh) =
+                        </strong>
+
+                        <span>
+                            Power (kW) × Time (hours)
+                        </span>
+
+                    </div>
+
+                    <p>
+                        For example, a hypothetical 100-watt television
+                        used for 5 hours would consume approximately
+                        0.5 kWh during that period.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================== TIPS ==================== -->
+        <section class="content-section">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">ENERGY TIPS</p>
+
+                <h2>
+                    Ways to reduce television energy usage
+                </h2>
+
+            </div>
+
+
+            <div class="tips-list">
+
+                <div class="tip">
+
+                    <span class="tip-number">01</span>
+
+                    <div>
+                        <h3>Turn the television off</h3>
+
+                        <p>
+                            Turn the television off when it is not being
+                            used rather than leaving it running.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="tip">
+
+                    <span class="tip-number">02</span>
+
+                    <div>
+                        <h3>Use energy-saving settings</h3>
+
+                        <p>
+                            Many televisions provide settings that can
+                            reduce display brightness or power usage.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="tip">
+
+                    <span class="tip-number">03</span>
+
+                    <div>
+                        <h3>Consider usage habits</h3>
+
+                        <p>
+                            Reducing unnecessary viewing time can also
+                            reduce the electricity consumed by the
+                            television.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ==================== ENERGY CHART OVERLAY ==================== -->
+    <div
+        class="chart-overlay"
+        id="chart-overlay"
+        aria-hidden="true"
+    >
+        <div
+            class="chart-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chart-dialog-title"
+        >
+            <button
+                class="chart-close"
+                id="chart-close"
+                type="button"
+                aria-label="Close energy chart"
+            >
+                &times;
+            </button>
+
+            <p class="eyebrow">ENERGY CONSUMPTION</p>
+
+            <h2 id="chart-dialog-title">Average energy consumption</h2>
+
+            <p id="chart-dialog-description">
+                Values show the average labelled energy consumption per year.
+            </p>
+
+            <div class="screen-size-guide">
+                <strong>Screen-size categories</strong>
+
+                <span>Small: 43 inches or less</span>
+                <span>Medium: 44–65 inches</span>
+                <span>Large: more than 65 inches</span>
+            </div>
+
+            <div class="chart-legend" id="chart-legend"></div>
+
+            <div
+                class="energy-chart"
+                id="energy-chart"
+                aria-label="Vertical bar chart showing average energy consumption"
+            ></div>
+
+            <p class="chart-note">
+                Note: This graph is an average calculation based on the
+                available data. It is not a prediction of the exact energy
+                consumption of an individual television.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="site-footer">
+
+        <p>
+            &copy; <span id="current-year"></span>
+            Quang Nguyen
+        </p>
+
+        <p>
+            This website was developed with the assistance of
+            Generative AI.
+        </p>
+
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/television-charts.js"></script>
+
+</body>
+</html>

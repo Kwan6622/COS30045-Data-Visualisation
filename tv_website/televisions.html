@@ -112,15 +112,6 @@
                         and may require more power during operation.
                     </p>
 
-                    <button
-                        class="text-button chart-trigger"
-                        type="button"
-                        data-chart="screen-size"
-                        aria-haspopup="dialog"
-                    >
-                        Explore more
-                    </button>
-
                 </article>
 
 
@@ -135,15 +126,6 @@
                         power requirements. Modern televisions may also
                         include energy-saving features.
                     </p>
-
-                    <button
-                        class="text-button chart-trigger"
-                        type="button"
-                        data-chart="display-technology"
-                        aria-haspopup="dialog"
-                    >
-                        Explore more
-                    </button>
 
                 </article>
 
@@ -164,6 +146,109 @@
 
             </div>
         </section>
+
+
+        <!-- ==================== ENERGY CONSUMPTION CHARTS ==================== -->
+        <section class="content-section" id="television-charts">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">DATA VISUALISATION</p>
+
+                <h2>
+                    Television Energy Consumption Data
+                </h2>
+
+                <p>
+                    Explore how television screen sizes and display technologies
+                    relate to average labelled energy consumption per year based on
+                    Australian household appliance data.
+                </p>
+
+            </div>
+
+
+            <!-- Screen-size categories guide -->
+            <div class="screen-size-guide">
+
+                <strong>Screen-size categories</strong>
+
+                <span>Small: 43 inches or less</span>
+                <span>Medium: 44–65 inches</span>
+                <span>Large: more than 65 inches</span>
+
+            </div>
+
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+
+                <!-- Chart 1: Screen Size -->
+                <article class="chart-card">
+
+                    <div class="chart-card-header">
+
+                        <p class="eyebrow">CHART 01</p>
+
+                        <h3>Average Energy by Screen Size</h3>
+
+                        <p>
+                            Shows how average labelled energy consumption increases
+                            significantly as screen size expands.
+                        </p>
+
+                    </div>
+
+                    <div class="chart-legend" id="legend-screen-size"></div>
+
+                    <div
+                        class="energy-chart"
+                        id="chart-screen-size"
+                        aria-label="Vertical bar chart showing average energy consumption by screen size"
+                    ></div>
+
+                </article>
+
+
+                <!-- Chart 2: Display Technology -->
+                <article class="chart-card">
+
+                    <div class="chart-card-header">
+
+                        <p class="eyebrow">CHART 02</p>
+
+                        <h3>Average Energy by Display Technology</h3>
+
+                        <p>
+                            Compares LCD, LCD (LED), and OLED display technologies
+                            within each screen-size category.
+                        </p>
+
+                    </div>
+
+                    <div class="chart-legend" id="legend-display-technology"></div>
+
+                    <div
+                        class="energy-chart"
+                        id="chart-display-technology"
+                        aria-label="Grouped vertical bar chart showing average energy consumption across display technologies and screen sizes"
+                    ></div>
+
+                </article>
+
+            </div>
+
+
+            <!-- Interpretative Note -->
+            <p class="chart-note">
+                Note: This graph is an average calculation based on the
+                available data. It is not a prediction of the exact energy
+                consumption of an individual television.
+            </p>
+
+        </section>
+
+
         <!-- ==================== ENERGY CALCULATION ==================== -->
         <section class="dark-section">
 
@@ -285,58 +370,7 @@
 
     </main>
 
-    <!-- ==================== ENERGY CHART OVERLAY ==================== -->
-    <div
-        class="chart-overlay"
-        id="chart-overlay"
-        aria-hidden="true"
-    >
-        <div
-            class="chart-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="chart-dialog-title"
-        >
-            <button
-                class="chart-close"
-                id="chart-close"
-                type="button"
-                aria-label="Close energy chart"
-            >
-                &times;
-            </button>
 
-            <p class="eyebrow">ENERGY CONSUMPTION</p>
-
-            <h2 id="chart-dialog-title">Average energy consumption</h2>
-
-            <p id="chart-dialog-description">
-                Values show the average labelled energy consumption per year.
-            </p>
-
-            <div class="screen-size-guide">
-                <strong>Screen-size categories</strong>
-
-                <span>Small: 43 inches or less</span>
-                <span>Medium: 44–65 inches</span>
-                <span>Large: more than 65 inches</span>
-            </div>
-
-            <div class="chart-legend" id="chart-legend"></div>
-
-            <div
-                class="energy-chart"
-                id="energy-chart"
-                aria-label="Vertical bar chart showing average energy consumption"
-            ></div>
-
-            <p class="chart-note">
-                Note: This graph is an average calculation based on the
-                available data. It is not a prediction of the exact energy
-                consumption of an individual television.
-            </p>
-        </div>
-    </div>
 
 
     <!-- ==================== FOOTER ==================== -->

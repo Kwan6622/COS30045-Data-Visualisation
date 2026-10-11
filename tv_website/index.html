@@ -216,9 +216,21 @@
                 <!-- Electricity price -->
                 <div class="form-group">
 
-                    <label for="price">
-                        Electricity price (cents per kWh)
-                    </label>
+                    <div class="price-header-flex">
+                        <label for="price">
+                            Electricity price (cents per kWh)
+                        </label>
+
+                        <button
+                            type="button"
+                            id="fetch-price-btn"
+                            class="live-price-btn"
+                            title="Fetch latest electricity price from Open Electricity API"
+                        >
+                            <span class="live-indicator-dot"></span>
+                            <span id="fetch-btn-text">Get Live NEM Price</span>
+                        </button>
+                    </div>
 
                     <input
                         type="number"
@@ -229,8 +241,8 @@
                         step="any"
                     >
 
-                    <small>
-                        Enter your electricity price in cents per kWh.
+                    <small id="price-status-text">
+                        Enter your electricity price or fetch live market data from Open Electricity.
                     </small>
 
                 </div>

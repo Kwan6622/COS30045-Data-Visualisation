@@ -7,27 +7,14 @@
 */
 const faqQuestions = document.querySelectorAll(".faq-question");
 
-
 /*
    Add a click event to every FAQ question.
 */
 faqQuestions.forEach(function (question) {
-
     question.addEventListener("click", function () {
-
-        /*
-           Find the FAQ item containing this question.
-        */
         const faqItem = question.parentElement;
-
-
-        /*
-           Add or remove the "open" class.
-        */
         faqItem.classList.toggle("open");
-
     });
-
 });
 
 
@@ -35,83 +22,149 @@ faqQuestions.forEach(function (question) {
    CURRENT YEAR
    ========================================================= */
 
-/*
-   Get the current year from the user's computer.
-*/
 const currentYear = new Date().getFullYear();
-
-
-/*
-   Find the element with id="current-year".
-*/
 const yearElement = document.getElementById("current-year");
 
-
-/*
-   Update the year if the element exists.
-*/
 if (yearElement) {
-
     yearElement.textContent = currentYear;
-
 }
+
+
+/* =========================================================
+   OPEN ELECTRICITY API INTEGRATION
+   Base URL: https://api.openelectricity.org.au/v4
+   ========================================================= */
+
+const OPEN_ELECTRICITY_API =
+    "https://api.openelectricity.org.au/v4/market/network/NEM?metrics=price";
+const CORS_PROXY_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+    OPEN_ELECTRICITY_API
+)}`;
+
+const fetchLiveElectricityPrice = async () => {
+    const priceInput = document.getElementById("price");
+    const statusText = document.getElementById("price-status-text");
+    const fetchBtn = document.getElementById("fetch-price-btn");
+    const fetchBtnText = document.getElementById("fetch-btn-text");
+
+    if (fetchBtnText) {
+        fetchBtnText.textContent = "Fetching...";
+    }
+    if (fetchBtn) {
+        fetchBtn.disabled = true;
+        fetchBtn.classList.add("is-loading");
+    }
+
+    try {
+        let response;
+        try {
+            // First attempt direct API request
+            response = await fetch(OPEN_ELECTRICITY_API);
+            if (!response.ok) {
+                throw new Error(`Direct API returned HTTP ${response.status}`);
+            }
+        } catch (directErr) {
+            // Fallback to CORS proxy if browser restricts cross-origin response
+            response = await fetch(CORS_PROXY_URL);
+            if (!response.ok) {
+                throw new Error(`Proxy returned HTTP ${response.status}`);
+            }
+        }
+
+        const json = await response.json();
+        const results = json?.data?.[0]?.results?.[0]?.data;
+
+        if (!results || results.length === 0) {
+            throw new Error("No price series found in API response");
+        }
+
+        // Extract latest recorded entry: [timestamp, $/MWh]
+        const latestEntry = results[results.length - 1];
+        const dollarPerMWh = Number(latestEntry[1]);
+
+        // Convert $/MWh to cents per kWh:
+        // 1 MWh = 1000 kWh, $1 = 100 cents => cents/kWh = ($/MWh) / 10
+        const centsPerKwh = dollarPerMWh / 10;
+
+        if (priceInput) {
+            priceInput.value = centsPerKwh.toFixed(2);
+        }
+
+        if (statusText) {
+            statusText.innerHTML = `
+                <span class="live-price-badge">
+                    Live NEM wholesale rate: <strong>${centsPerKwh.toFixed(
+                        2
+                    )}¢/kWh</strong> (via Open Electricity API).
+                </span>
+            `;
+        }
+
+        if (fetchBtnText) {
+            fetchBtnText.textContent = "Live Rate Applied";
+        }
+    } catch (error) {
+        console.warn(
+            "Could not load live electricity price from Open Electricity API:",
+            error
+        );
+
+        if (priceInput && (!priceInput.value || Number(priceInput.value) <= 0)) {
+            priceInput.value = "30.00";
+        }
+
+        if (statusText) {
+            statusText.innerHTML = `
+                <span class="fallback-price-badge">
+                    Live API unavailable. Using standard Australian average (30.00¢/kWh).
+                </span>
+            `;
+        }
+
+        if (fetchBtnText) {
+            fetchBtnText.textContent = "Retry Live Price";
+        }
+    } finally {
+        if (fetchBtn) {
+            fetchBtn.disabled = false;
+            fetchBtn.classList.remove("is-loading");
+        }
+    }
+};
+
+const initCalculatorPriceApi = () => {
+    const fetchBtn = document.getElementById("fetch-price-btn");
+    const priceInput = document.getElementById("price");
+
+    if (fetchBtn) {
+        fetchBtn.addEventListener("click", fetchLiveElectricityPrice);
+    }
+
+    // Auto-fetch on page load if price field exists and is empty
+    if (priceInput && !priceInput.value) {
+        fetchLiveElectricityPrice();
+    }
+};
 
 
 /* =========================================================
    APPLIANCE ENERGY CALCULATOR
    ========================================================= */
 
-
-/*
-   Find the calculator form.
-*/
 const energyForm = document.getElementById("energy-form");
+const calculatorResults = document.getElementById("calculator-results");
 
-
-/*
-   Find the results area.
-*/
-const calculatorResults =
-    document.getElementById("calculator-results");
-
-
-/*
-   Only run the calculator code if the calculator
-   exists on the current page.
-*/
 if (energyForm && calculatorResults) {
+    // Initialise the Open Electricity live price feature
+    initCalculatorPriceApi();
 
-
-    /*
-       Listen for the form being submitted.
-    */
     energyForm.addEventListener("submit", function (event) {
-
-        /*
-           Stop the browser from refreshing the page.
-        */
         event.preventDefault();
 
+        const power = Number(document.getElementById("power").value);
+        const hours = Number(document.getElementById("hours").value);
+        const price = Number(document.getElementById("price").value);
 
-        /*
-           Read the values entered by the user.
-        */
-        const power = Number(
-            document.getElementById("power").value
-        );
-
-        const hours = Number(
-            document.getElementById("hours").value
-        );
-
-        const price = Number(
-            document.getElementById("price").value
-        );
-
-
-        /*
-           Validate the user input.
-        */
         if (
             power <= 0 ||
             hours <= 0 ||
@@ -121,7 +174,6 @@ if (energyForm && calculatorResults) {
             isNaN(hours) ||
             isNaN(price)
         ) {
-
             calculatorResults.innerHTML = `
                 <h3>Invalid input</h3>
 
@@ -132,116 +184,50 @@ if (energyForm && calculatorResults) {
                     0 and 24 hours.
                 </p>
             `;
-
             return;
         }
 
-
-        /*
-           Convert watts to kilowatts.
-
-           1000 watts = 1 kilowatt
-        */
+        // 1000 watts = 1 kilowatt
         const powerInKilowatts = power / 1000;
 
-
-        /*
-           Calculate daily energy consumption.
-
-           Energy = Power × Time
-        */
+        // Energy = Power × Time
         const dailyEnergy = powerInKilowatts * hours;
-
-
-        /*
-           Estimate monthly energy consumption.
-
-           We use 30 days as an average month.
-        */
         const monthlyEnergy = dailyEnergy * 30;
-
-
-        /*
-           Estimate yearly energy consumption.
-        */
         const yearlyEnergy = dailyEnergy * 365;
 
+        // Price is in cents, divide by 100 for dollars
+        const monthlyCost = monthlyEnergy * (price / 100);
+        const yearlyCost = yearlyEnergy * (price / 100);
 
-        /*
-           Calculate monthly electricity cost.
-
-           Price is entered in cents, so divide by 100
-           to convert it to dollars.
-        */
-        const monthlyCost =
-            monthlyEnergy * (price / 100);
-
-
-        /*
-           Calculate yearly electricity cost.
-        */
-        const yearlyCost =
-            yearlyEnergy * (price / 100);
-
-
-        /*
-           Display the results inside the existing
-           results panel.
-
-           innerHTML replaces the previous results,
-           preventing duplicate results.
-        */
         calculatorResults.innerHTML = `
-
-            <h3>
-                Your Results
-            </h3>
+            <h3>Your Results</h3>
 
             <div class="result-grid">
-
                 <div class="result-item">
                     <span>Daily Energy</span>
-                    <strong>
-                        ${dailyEnergy.toFixed(2)} kWh
-                    </strong>
+                    <strong>${dailyEnergy.toFixed(2)} kWh</strong>
                 </div>
-
 
                 <div class="result-item">
                     <span>Monthly Energy</span>
-                    <strong>
-                        ${monthlyEnergy.toFixed(2)} kWh
-                    </strong>
+                    <strong>${monthlyEnergy.toFixed(2)} kWh</strong>
                 </div>
-
 
                 <div class="result-item">
                     <span>Yearly Energy</span>
-                    <strong>
-                        ${yearlyEnergy.toFixed(2)} kWh
-                    </strong>
+                    <strong>${yearlyEnergy.toFixed(2)} kWh</strong>
                 </div>
-
 
                 <div class="result-item">
                     <span>Monthly Cost</span>
-                    <strong>
-                        $${monthlyCost.toFixed(2)}
-                    </strong>
+                    <strong>$${monthlyCost.toFixed(2)}</strong>
                 </div>
-
 
                 <div class="result-item">
                     <span>Yearly Cost</span>
-                    <strong>
-                        $${yearlyCost.toFixed(2)}
-                    </strong>
+                    <strong>$${yearlyCost.toFixed(2)}</strong>
                 </div>
-
             </div>
-
         `;
-
     });
-
 }

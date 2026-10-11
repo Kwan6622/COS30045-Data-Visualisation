@@ -244,6 +244,149 @@
 
         </section>
 
+
+        <!-- ==================== APPLIANCE ENERGY CALCULATOR ==================== -->
+        <section class="content-section calculator-section">
+
+            <div class="section-heading">
+
+                <p class="eyebrow">
+                    INTERACTIVE TOOL
+                </p>
+
+                <h2>
+                    Appliance Energy Calculator
+                </h2>
+
+                <p>
+                    Enter your appliance's power usage and daily hours to estimate
+                    energy consumption and electricity costs. You can enter a custom price
+                    or fetch live Australian electricity market price data powered by Open Electricity.
+                </p>
+
+            </div>
+
+
+            <div class="calculator">
+
+                <!-- Calculator form -->
+                <form id="energy-form">
+
+                    <!-- Power input -->
+                    <div class="form-group">
+
+                        <label for="power">
+                            Appliance power usage (watts)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="power"
+                            name="power"
+                            placeholder="e.g. 100"
+                            min="0"
+                            step="any"
+                        >
+
+                        <small>
+                            Enter the appliance's power rating in watts.
+                        </small>
+
+                    </div>
+
+
+                    <!-- Hours input -->
+                    <div class="form-group">
+
+                        <label for="hours">
+                            Average hours of use per day
+                        </label>
+
+                        <input
+                            type="number"
+                            id="hours"
+                            name="hours"
+                            placeholder="e.g. 5"
+                            min="0"
+                            max="24"
+                            step="any"
+                        >
+
+                        <small>
+                            Enter how many hours the appliance is used each day.
+                        </small>
+
+                    </div>
+
+
+                    <!-- Electricity price with Open Electricity API button -->
+                    <div class="form-group">
+
+                        <div class="price-header-flex">
+                            <label for="price">
+                                Electricity price (cents per kWh)
+                            </label>
+
+                            <button
+                                type="button"
+                                id="fetch-price-btn"
+                                class="live-price-btn"
+                                title="Fetch latest electricity price from Open Electricity API"
+                            >
+                                <span class="live-indicator-dot"></span>
+                                <span id="fetch-btn-text">Get Live NEM Price</span>
+                            </button>
+                        </div>
+
+                        <input
+                            type="number"
+                            id="price"
+                            name="price"
+                            placeholder="e.g. 30"
+                            min="0"
+                            step="any"
+                        >
+
+                        <small id="price-status-text">
+                            Enter your electricity rate in cents per kWh or fetch live market data from Open Electricity.
+                        </small>
+
+                    </div>
+
+
+                    <!-- Submit button -->
+                    <button
+                        type="submit"
+                        class="calculator-button"
+                    >
+                        Calculate Energy Usage
+                    </button>
+
+                </form>
+
+
+                <!-- Results -->
+                <div
+                    id="calculator-results"
+                    class="calculator-results"
+                    aria-live="polite"
+                >
+
+                    <h3>
+                        Your Results
+                    </h3>
+
+                    <p>
+                        Enter your appliance information above and click
+                        "Calculate Energy Usage".
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
     </main>
 
 

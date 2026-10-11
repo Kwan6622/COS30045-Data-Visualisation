@@ -2,25 +2,68 @@
 
 ## Overview
 
-The **Appliance Energy Consumption Website** is a small educational website about household appliance energy consumption in the Australian market.
+The **Appliance Energy Consumption Website** is an educational website designed to help Australian consumers understand household appliance energy consumption and its potential impact on electricity costs.
 
-The website was originally developed as part of Exercise 0.2 and has been extended for **Exercise 3** to communicate a data story about **television energy consumption** through data visualisation and supporting contextual information.
+The website was originally developed as part of **Exercise 0.2** and subsequently extended for **Exercise 3** in **COS30045 – Data Visualisation** at Swinburne University of Technology.
 
-The project also demonstrates fundamental web development concepts using HTML, CSS and JavaScript.
+The latest version introduces improved data visualisations, more comprehensive Exploratory Data Analysis (EDA), and an electricity pricing API to provide more relevant electricity cost estimates for Australian consumers.
+
+The project also demonstrates fundamental web development concepts using HTML, CSS, and JavaScript, alongside data preparation and visualisation techniques using KNIME.
+
+---
+
+## Version History
+
+### Version 2.0 – Improved Data Visualisation and Electricity Pricing
+
+This version focuses on improving the accuracy, interpretability, and practical value of the television energy consumption analysis.
+
+**Major Updates:**
+
+- **Australian Electricity Pricing API:** Integrated an API to retrieve electricity pricing information for Australia, allowing electricity cost estimates to be calculated using updated pricing data instead of relying solely on fixed electricity rates.
+- **Improved Cost Estimation:** Enhanced electricity cost calculations by connecting estimated annual energy consumption (kWh/year) with electricity prices (AUD/kWh).
+- **Additional Data Visualisations:** Introduced new charts to explore the relationships between television characteristics, energy efficiency ratings, annual energy consumption, and estimated electricity costs.
+- **Enhanced Exploratory Data Analysis:** Refined the KNIME workflows to provide more meaningful comparisons between television screen sizes and screen technologies.
+- **Balanced Sampling:** Applied equal-size sampling where appropriate to reduce sample imbalance between screen technology categories.
+- **Improved Screen Size Comparisons:** Introduced comparisons between televisions of similar screen sizes to reduce the influence of screen size when evaluating differences between screen technologies.
+- **Energy Star Rating Analysis:** Improved the interpretation of Energy Star Ratings by examining their relationship with annual electricity consumption and television screen size.
+- **Clearer Data Storytelling:** Updated chart titles, labels, annotations, and supporting explanations to help readers understand the visualisations and their limitations.
+
+These changes aim to make the website more useful for consumers who want to consider both energy efficiency and estimated electricity expenses when comparing televisions.
+
+### Version 1.0 – Initial Website and Visualisation
+
+The initial version established the foundation of the website.
+
+**Features included:**
+
+- Three-page website structure: Home, Televisions, and About Us.
+- Consistent navigation menu with active page indicators.
+- Responsive layouts using CSS media queries.
+- Interactive FAQ accordion using JavaScript.
+- Initial television energy consumption visualisation.
+- Basic data preparation and aggregation using KNIME.
+- Supporting explanatory text and data storytelling.
+
+---
 
 ## Live Website
 
 The website can be accessed here:
 
-**[View the Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)**
+[View the Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)
+
+---
 
 ## Pages
 
-The website contains three HTML pages:
+The website contains three main HTML pages:
 
-- Home
-- Televisions
-- About Us
+1. **Home:** Introduces appliance energy consumption, electricity costs, and general information through an interactive FAQ.
+2. **Televisions:** Presents television energy consumption visualisations, efficiency comparisons, and estimated electricity costs.
+3. **About Us:** Provides background information about the website and its educational purpose.
+
+---
 
 ## Features
 
@@ -30,32 +73,69 @@ All pages contain a consistent navigation menu.
 
 The navigation includes:
 
-- Power logo
-- Home link
-- Televisions link
-- About Us link
-- Hover effects
-- Active page indicator
-
-Clicking the Power logo returns the user to the Home page.
+- Power logo linking to the Home page.
+- Home, Televisions, and About Us links.
+- Hover effects.
+- Active page indicators.
 
 ### Television Energy Visualisation
 
-The **Televisions** page presents visualisations based on the television energy consumption dataset.
+The **Televisions** page presents charts based on the television energy consumption dataset.
 
-The visualisation is supported by explanatory text that provides context for the reader and helps communicate the main patterns in the data rather than presenting the chart by itself.
+The visualisations examine relationships between:
+
+- Television screen size and annual energy consumption.
+- Screen technology and energy consumption.
+- Energy Star Ratings and annual electricity usage.
+- Energy consumption among televisions with comparable screen sizes.
+- Estimated annual electricity costs based on electricity pricing data.
+
+The visualisations are supported by explanatory text to communicate the main patterns and encourage readers to interpret the charts critically.
+
+### Australian Electricity Pricing API
+
+Version 2.0 introduces an electricity pricing API to improve estimated running costs for television products in Australia.
+
+Rather than calculating electricity costs using only a fixed, manually entered electricity rate, the website can use electricity pricing information obtained through the API.
+
+Estimated annual electricity costs are calculated using:
+
+**Estimated Annual Cost (AUD) = Annual Energy Consumption (kWh) × Electricity Price (AUD/kWh)**
+
+This allows the website to connect energy consumption data with electricity cost estimates that are more relevant to the Australian market.
+
+However, the estimates are indicative rather than exact household electricity bills. Actual electricity prices may vary depending on state, electricity retailer, tariff structure, billing period, and household usage.
+
+The accuracy and freshness of the estimate also depend on the data provided by the API.
+
+### Improved Exploratory Data Analysis
+
+The KNIME analysis workflow has been refined to improve the quality and interpretability of the visualisations.
+
+Key improvements include:
+
+- Reviewing relevant data attributes and missing values.
+- Converting and grouping television screen sizes.
+- Comparing annual energy consumption across screen technologies.
+- Applying equal-size random sampling for selected comparisons.
+- Comparing televisions of similar screen sizes.
+- Investigating the relationship between Energy Star Ratings and electricity consumption.
+- Calculating average energy consumption for selected groups.
+- Reviewing the distribution of television records across categories.
+
+These improvements help distinguish general patterns from comparisons that may be influenced by differences in screen size or sample distribution.
 
 ### FAQ Accordion
 
-The Home page contains an FAQ section.
+The Home page contains an interactive FAQ section.
 
-The FAQ answers are hidden by default and can be revealed by clicking the corresponding question.
+FAQ answers are hidden by default and can be displayed by clicking the corresponding question.
 
 JavaScript is used to control the accordion behaviour.
 
 ### Responsive Design
 
-CSS media queries are used to make the website responsive across desktop, tablet and mobile screen sizes.
+CSS media queries are used to adapt the website layout to different screen sizes, including desktop, tablet, and mobile devices.
 
 ---
 
@@ -63,35 +143,75 @@ CSS media queries are used to make the website responsive across desktop, tablet
 
 ## Audience
 
-The primary audience for this visualisation is **Australian consumers who are interested in understanding the energy consumption of televisions**.
+The primary audience is **Australian consumers interested in understanding television energy consumption, energy efficiency, and potential electricity costs**.
 
-The visualisation may also be useful for people who are comparing televisions and want to understand how characteristics such as **screen size and screen technology relate to energy consumption**.
+The website is also intended for consumers comparing televisions who want to understand how characteristics such as screen size, screen technology, and Energy Star Rating relate to electricity usage.
 
-The visualisation is designed for a general audience, so it focuses on presenting the information in a clear and accessible way without requiring advanced knowledge of data analysis.
+The visualisations are designed for a general audience without requiring advanced knowledge of data analysis.
 
 ## Audience Interest
 
-Energy consumption is an important consideration when purchasing household appliances because appliances with higher energy consumption can contribute to greater electricity usage over time.
+Energy consumption is an important consideration when purchasing household appliances because electricity usage contributes to ongoing household expenses.
 
-For televisions, consumers may be interested in understanding whether larger screen sizes or different screen technologies are associated with different levels of energy consumption.
+When choosing a television, consumers may consider:
 
-The visualisation therefore aims to help the audience explore these relationships and make the dataset easier to understand.
+- Whether larger televisions generally consume more electricity.
+- How different screen technologies compare in energy consumption.
+- Whether a higher Energy Star Rating always means lower annual electricity usage.
+- How much a television may cost to operate annually.
+- Why televisions with similar ratings can have different electricity consumption levels.
+
+The website aims to make these relationships easier to understand through data visualisation and practical electricity cost estimates.
 
 ## Story
 
-The data story focuses on the relationship between **television characteristics and energy consumption**.
+**Story Title: Beyond the Energy Star Rating – Understanding the Real Energy Cost of Televisions**
 
-Rather than displaying the television dataset as a large table of individual products, the visualisation groups and summarises the data to reveal patterns more clearly.
+The data story investigates how television characteristics relate to annual electricity consumption and estimated operating costs.
 
-In particular, the visualisation explores how energy consumption varies according to factors such as:
+Rather than relying on a single characteristic, such as screen technology or Energy Star Rating, the visualisations encourage readers to consider multiple factors when comparing televisions.
 
-- Television screen size
-- Screen technology
-- Average energy consumption
+The story follows four main questions.
 
-This allows the reader to compare groups of televisions and identify patterns in how different television characteristics relate to energy usage.
+### 1. How Does Screen Size Relate to Energy Consumption?
 
-The accompanying text on the website provides context for the visualisation and explains what the reader should consider when interpreting the chart.
+The first analysis examines the relationship between television screen size and annual electricity consumption.
+
+Scatter plots and aggregated bar charts are used to explore energy consumption patterns across different screen sizes.
+
+This helps readers investigate whether larger screens are generally associated with greater electricity usage.
+
+### 2. Does Screen Technology Make a Difference?
+
+The second analysis compares annual energy consumption across different screen technologies, including LCD, LCD (LED), and OLED.
+
+Equal-size sampling is used for selected comparisons to reduce differences in sample counts.
+
+Additional comparisons involving televisions of similar sizes help reduce the influence of screen size when examining differences between technologies.
+
+These analyses explore associations rather than proving that screen technology directly causes differences in energy consumption.
+
+### 3. Does the Same Energy Star Rating Mean the Same Electricity Consumption?
+
+The third analysis explores the relationship between Energy Star Ratings and annual electricity consumption.
+
+Energy Star Ratings indicate relative energy efficiency under a standardised rating methodology, while annual energy consumption estimates the total electricity a product uses under standardised testing assumptions.
+
+Two televisions with the same Energy Star Rating may still consume different amounts of electricity, particularly when their screen sizes differ.
+
+The visualisations therefore encourage readers to examine both Energy Star Ratings and annual electricity consumption when comparing products.
+
+### 4. What Does Energy Consumption Mean for Electricity Costs?
+
+The final part of the story connects annual electricity consumption to estimated electricity expenses.
+
+By incorporating electricity pricing information from an API, the website translates energy usage into a financial measure that may be easier for consumers to understand.
+
+This allows readers to consider not only how much electricity a television uses, but also its estimated annual operating cost.
+
+**Main Message:**
+
+Choosing an energy-efficient television involves more than comparing screen technology or Energy Star Ratings. Screen size, annual electricity consumption, and local electricity prices should also be considered to better understand potential operating costs.
 
 ---
 
@@ -101,113 +221,69 @@ The accompanying text on the website provides context for the visualisation and 
 
 The project uses the **television energy consumption dataset provided for COS30045 – Data Visualisation at Swinburne University of Technology**.
 
-The dataset contains information about television products available in the Australian market, including attributes used to examine their characteristics and energy consumption.
+The dataset contains television product information relevant to the Australian market, including attributes such as:
+
+- Television screen size.
+- Screen technology.
+- Energy Star Rating.
+- Labelled annual energy consumption (kWh/year).
+- Product and manufacturer information.
+
+The records describe registered television products and should not be interpreted as actual television sales volumes or consumer purchasing preferences.
+
+### Electricity Pricing Data
+
+An external API is used to retrieve electricity pricing information relevant to Australia.
+
+The retrieved pricing data supports estimated annual electricity cost calculations.
+
+Electricity prices may differ between locations, retailers, and tariff plans. Therefore, the pricing information is used to provide indicative comparisons rather than guaranteed household electricity costs.
+
+---
 
 ## Data Processing
 
-The original dataset was processed and transformed before being used for visualisation.
+The television dataset was cleaned, explored, and transformed using **KNIME** before being used in the visualisations.
 
-Data preparation included tasks such as:
+Data preparation and analysis included:
 
-- Filtering the dataset to relevant television records
-- Cleaning and checking relevant attributes
-- Converting measurement units where necessary
-- Rounding or grouping screen sizes for clearer comparison
-- Grouping records by screen size and screen technology
-- Calculating summary values such as average energy consumption
-- Reshaping the data where required for visualisation
+- Selecting relevant television attributes.
+- Checking data quality and missing values.
+- Filtering records where appropriate.
+- Converting screen sizes into suitable measurement units.
+- Rounding or grouping screen sizes to simplify comparisons.
+- Applying equal-size sampling to selected technology comparisons.
+- Grouping records by screen size and screen technology.
+- Calculating average annual energy consumption.
+- Exploring Energy Star Rating distributions.
+- Comparing energy consumption among televisions of similar screen sizes.
+- Reshaping aggregated data for chart generation.
 
-Data processing and exploration were performed using **KNIME**.
+The improved workflow aims to produce clearer comparisons and reduce misleading interpretations caused by differences in sample sizes or television characteristics.
 
-These transformations make the dataset easier to visualise and allow patterns between television characteristics and energy consumption to be communicated more clearly.
+---
 
 ## Privacy
 
-The dataset contains information about television products rather than personal information about individuals.
+The television dataset contains product information rather than personal information about individuals.
 
-Therefore, the visualisation does not use names, addresses, contact details or other personally identifiable information.
+The visualisations do not require personal names, addresses, contact details, or other personally identifiable information.
 
-As a result, the privacy risk associated with this dataset is relatively low.
+The electricity pricing API is used to retrieve pricing information for cost estimation and does not require the television dataset to contain personal household information.
+
+Consequently, privacy risks associated with the dataset are relatively low.
+
+---
 
 ## Accuracy and Limitations
 
-The visualisation depends on the accuracy and completeness of the original dataset.
+The website has been improved to present more meaningful comparisons, but several limitations remain.
 
-There are several limitations that should be considered when interpreting the results:
-
-- The dataset may not represent every television currently available in Australia.
-- Product information may change as new television models enter the market.
-- Grouping and averaging data can hide differences between individual television models.
-- Screen size and screen technology are not the only factors that may influence energy consumption.
-- Missing, outdated or incorrectly recorded values in the original dataset may affect the visualisation.
-
-Therefore, the visualisation should be interpreted as a way of exploring patterns in the provided dataset rather than as a complete representation of every television available in the Australian market.
-
-## Ethics
-
-The visualisation was designed to present the data in a clear and responsible way.
-
-Care was taken not to intentionally manipulate chart scales, categories or labels in ways that could mislead the audience.
-
-The visualisation also avoids making claims that cannot be supported by the available data. Relationships shown in the visualisation should be interpreted as patterns or associations within the dataset and should not automatically be interpreted as causal relationships.
-
-Where data has been grouped or summarised, this is explained so that readers understand that the values may represent averages across multiple television products.
-
----
-
-# AI Declaration
-
-Generative AI was used during the development of this website, primarily using **ChatGPT**.
-
-I used Generative AI to assist with the structure and syntax of the HTML, CSS and JavaScript code. This included creating the initial three-page website structure, navigation menu, responsive styling, FAQ accordion and JavaScript functionality. I also used it to help organise the project into separate HTML, CSS and JavaScript files and to explain how different parts of the code work.
-
-For Exercise 3, Generative AI was also used to assist with organising and improving written content for the README and website, including explanations surrounding the television energy consumption visualisation.
-
-My previous experience with web development is somewhat rusty because my major is Artificial Intelligence, so I was not confident that I could build the entire website independently from scratch. However, I reviewed the generated code and can confirm that I understand the code used in the final website and can explain what the main sections do.
-
-I adapted and reviewed the generated code rather than using it without understanding it. In particular, I checked how the HTML pages are connected through the navigation, how CSS classes are used for styling, how JavaScript handles interactive functionality, and how the visualisation is presented to the user.
-
-Through using Generative AI, I refreshed my understanding of basic web development concepts including HTML document structure, CSS selectors and layout, JavaScript event listeners, DOM manipulation and responsive web design.
-
-One limitation I encountered was that Generative AI can generate code that works but may contain concepts or syntax that I have not used recently. Therefore, I needed to read through the generated content and understand each section before using it.
-
-Overall, Generative AI was used as a **development and learning assistant rather than as a replacement for understanding the code or data**. Generated material was reviewed and adapted before being included in the final project.
-
----
-
-# Technologies
-
-The project uses:
-
-- HTML5
-- CSS3
-- JavaScript
-- KNIME for data preparation and analysis
-
-No external web frameworks are required.
-
-## Folder Structure
-
-```text
-appliance-energy-consumption/
-│
-├── index.html
-├── televisions.html
-├── about.html
-├── README.md
-│
-└── assets/
-    ├── css/
-    │   └── style.css
-    │
-    ├── js/
-    │   └── script.js
-    │
-    └── img/
-        └── PowerIcon.png
-```
-
-## Website
-
-**Live website:**  
-[https://mercury.swin.edu.au/cos30045/s104992981/test/index.html](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)
+- **Dataset Coverage:** The dataset may not represent every television currently sold in Australia.
+- **Product Records vs Sales:** The number of registered television records does not represent the number of units sold or consumer purchasing preferences.
+- **Screen Size Differences:** Energy consumption comparisons can be affected by differences in television screen sizes.
+- **Sampling:** Equal-size sampling balances group counts but may not preserve the original dataset distribution or control for every relevant variable.
+- **Energy Star Ratings:** Televisions with the same efficiency rating may still have different annual electricity consumption.
+- **Estimated Consumption:** Labelled energy consumption is based on standardised assumptions and may differ from actual household electricity usage.
+- **Electricity Pricing:** API-provided electricity prices may vary in freshness, coverage, and applicability to individual households.
+- **Additional Factors:** Television brightness, display settings, usage habits, model specifications, and other characteristics

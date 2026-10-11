@@ -51,7 +51,7 @@ The initial version established the foundation of the website.
 
 The website can be accessed here:
 
-[View the Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)
+[View the Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/AUS-TV-ENERGY/index.html)
 
 ---
 

@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Base Stylesheet - COS30045 Data Visualisation Week 6
+   Exercise 6.2: TV Energy Consumption Histogram with Filters
+   ========================================================================== */
+
+/* Import Google Font Roboto */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #fbf7ee;
+    color: #333333;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Header Banner */
+.header-banner {
+    background-color: #c2581d;
+    width: 100%;
+    padding: 20px 48px;
+}
+
+.header-banner h1 {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #3a1e0b;
+    letter-spacing: -0.5px;
+}
+
+/* Main Content Container */
+.content-container {
+    max-width: 1100px;
+    padding: 36px 48px 48px;
+}
+
+/* Page Headings */
+.page-title {
+    font-size: 2.05rem;
+    font-weight: 700;
+    color: #333333;
+    line-height: 1.25;
+    margin-bottom: 12px;
+}
+
+.page-subtitle {
+    font-size: 1.15rem;
+    color: #4b4b4b;
+    margin-bottom: 20px;
+}
+
+/* Filter Button Containers */
+#filters_screen,
+#filters_size {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 16px 0 20px;
+}
+
+#filters_size {
+    margin-top: 24px;
+    margin-bottom: 32px;
+}
+
+/* Filter Button Styles */
+.filter {
+    min-width: 86px;
+    padding: 10px 22px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    background-color: #c2581d;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.25s ease-in-out, opacity 0.2s ease;
+}
+
+.filter:hover {
+    background-color: #ab4c16;
+}
+
+.filter.active {
+    background-color: #f7b955;
+    color: #ffffff;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Data Source Section */
+.data-source {
+    margin-top: 36px;
+}
+
+.data-source h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333333;
+    margin-bottom: 8px;
+}
+
+.data-source a {
+    color: #1a56db;
+    font-size: 1.05rem;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.data-source a:hover {
+    color: #0b3799;
+}
+
+.data-source .download-date {
+    margin-top: 6px;
+    font-size: 1rem;
+    color: #4b4b4b;
+}
+
+/* Footer */
+.page-footer {
+    margin-top: 36px;
+    font-size: 0.95rem;
+    color: #4b4b4b;
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Exercise 6.4 - TV Energy Consumption Histogram with Filters and Scatterplot with Tooltips">
+    <title>TV Energy Consumption</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- CSS stylesheets -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/visualisation.css">
+</head>
+<body>
+    <!-- Top banner -->
+    <header class="header-banner">
+        <h1>TV Energy Consumption</h1>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="content-container">
+        <h2 class="page-title">Energy Consumption for different TV screen types and sizes</h2>
+        <p class="page-subtitle">TV's vary considerably in energy consumption.</p>
+
+        <!-- Screen Technology Filters -->
+        <div id="filters_screen"></div>
+
+        <!-- Histogram chart container -->
+        <div id="histogram" class="responsive-svg-container"></div>
+
+        <!-- Scatterplot screen size filter (extension) -->
+        <p class="filter-caption">Filter the scatterplot by screen size:</p>
+        <div id="filters_size"></div>
+
+        <!-- Scatterplot chart container -->
+        <div id="scatterplot" class="responsive-svg-container"></div>
+
+        <!-- Data Source -->
+        <section class="data-source">
+            <h2>Data source</h2>
+            <p>
+                <a href="https://www.energyrating.gov.au/document/energy-rating-data-household-appliances-televisions" target="_blank" rel="noopener noreferrer">Energy Rating Data for household appliances &ndash; Televisions</a>
+            </p>
+            <p class="download-date">Downloaded Jan 2026</p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <p>&copy; Data Visualisation Week 6</p>
+        </footer>
+    </main>
+
+    <!-- JavaScript files (order as specified in the exercise) -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/load-data.js"></script>
+    <script src="js/shared-constants.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/histogram.js"></script>
+    <script src="js/scatterplot.js"></script>
+</body>
+</html>

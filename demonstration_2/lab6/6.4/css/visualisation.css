@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Visualisation Stylesheet - COS30045 Data Visualisation Week 6
+   Dufour & Meeks (2024) Chapter 6 & 7
+   ========================================================================== */
+
+/* Responsive container of the svg element */
+.responsive-svg-container {
+    width: 100%;
+    max-width: 1000px;
+}
+
+#scatterplot {
+    margin-top: 12px;
+}
+
+@media screen and (max-width: 596px) {
+    .responsive-svg-container {
+        margin-bottom: 20px;
+    }
+}
+
+/* Axis and labels styles */
+.tick text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13.5px;
+    fill: #333333;
+}
+
+.tick line,
+.domain {
+    stroke: #333333;
+    stroke-width: 1px;
+}
+
+.axis-label {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    fill: #222222;
+}
+
+/* SVG styling */
+svg {
+    display: block;
+    overflow: visible;
+}
+
+/* Legend styling */
+.legend-label {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    fill: #222222;
+    user-select: none;
+}
+
+/* Tooltip should never block mouse events on circles */
+.tooltip {
+    pointer-events: none;
+}

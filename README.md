@@ -43,9 +43,13 @@ COS30045-Data-Visualisation/
 │
 ├── README.md
 ├── lab/
-├── week_1/
-├── week_2/
-├── week_3/
+├── lectures/
+├── tv_website/
+├── demonstration_1/
+├── demonstration_2/
+├── critique_and_project_assessment/
+├── COS30045_Unit_Outline_Sep2026.pdf
+├── Swinburne_VPN_Installation_Guide_Personal_Devices.pdf
 └── ...
 ```
 
@@ -72,16 +76,16 @@ The exercises throughout the unit involve:
 
 The main technologies and tools used throughout the unit include:
 
-| Technology / Tool | Purpose |
-|---|---|
-| HTML5 | Web page structure |
-| CSS3 | Website styling |
-| JavaScript | Web interactivity |
-| D3.js | Interactive data visualisation |
-| KNIME | Data processing and exploration |
-| Git | Version control |
-| GitHub | Repository management |
-| GitHub Classroom | Exercise and lab submissions |
+| Technology / Tool | Purpose                         |
+| ----------------- | ------------------------------- |
+| HTML5             | Web page structure              |
+| CSS3              | Website styling                 |
+| JavaScript        | Web interactivity               |
+| D3.js             | Interactive data visualisation  |
+| KNIME             | Data processing and exploration |
+| Git               | Version control                 |
+| GitHub            | Repository management           |
+| GitHub Classroom  | Exercise and lab submissions    |
 
 ---
 
@@ -100,7 +104,7 @@ Through this unit, I aim to develop the ability to:
 
 Some exercises in this repository contribute to the development of an Appliance Energy Consumption website.
 
-**Live Website:**  
+**Live Website:**
 [Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)
 
 ---
@@ -109,6 +113,6 @@ Some exercises in this repository contribute to the development of an Appliance 
 
 **Nguyen Quang**
 
-Bachelor of Computer Science  
-Major in Artificial Intelligence  
+Bachelor of Computer Science
+Major in Artificial Intelligence
 Swinburne University of Technology

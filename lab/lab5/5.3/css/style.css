@@ -1001,6 +1001,27 @@ main {
 #line-chart .point {
     stroke: #ffffff;
     stroke-width: 1.5;
+    cursor: pointer;
+}
+
+#line-chart .point:focus {
+    outline: none;
+    stroke: #1f2933;
+    stroke-width: 2;
+}
+
+#line-chart .line-tooltip {
+    pointer-events: none;
+}
+
+#line-chart .line-tooltip rect {
+    fill: #1f2933;
+}
+
+#line-chart .line-tooltip text {
+    fill: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 #donut-chart .arc text {

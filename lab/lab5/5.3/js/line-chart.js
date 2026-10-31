@@ -44,14 +44,45 @@ const drawLineChart = data => {
         .attr("text-anchor", "middle")
         .text("Year");
 
+    const tooltip = innerChart.append("g")
+        .attr("class", "line-tooltip")
+        .attr("aria-hidden", "true")
+        .style("display", "none");
+
+    tooltip.append("rect")
+        .attr("x", -62)
+        .attr("y", -34)
+        .attr("width", 124)
+        .attr("height", 28)
+        .attr("rx", 4);
+
+    const tooltipText = tooltip.append("text")
+        .attr("text-anchor", "middle")
+        .attr("y", -15);
+
     innerChart.selectAll(".point")
         .data(data)
         .join("circle")
         .attr("class", "point")
+        .attr("tabindex", 0)
+        .attr("role", "img")
+        .attr("aria-label", d => `${d.year}: $${d.averagePrice} per megawatt hour`)
         .attr("r", 4)
         .attr("cx", d => xScale(d.year))
         .attr("cy", d => yScale(d.averagePrice))
-        .attr("fill", "#0077b6");
+        .attr("fill", "#0077b6")
+        .on("mouseenter focus", function (event, d) {
+            d3.select(this).attr("r", 6);
+            tooltip
+                .style("display", null)
+                .raise()
+                .attr("transform", `translate(${xScale(d.year)}, ${yScale(d.averagePrice)})`);
+            tooltipText.text(`${d.year}: $${d.averagePrice} per MWh`);
+        })
+        .on("mouseleave blur", function () {
+            d3.select(this).attr("r", 4);
+            tooltip.style("display", "none");
+        });
 
     const lineGenerator = d3.line()
         .x(d => xScale(d.year))

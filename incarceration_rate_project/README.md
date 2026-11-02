@@ -10,7 +10,7 @@ This project visualizes prison population rates per `100,000` inhabitants compil
 
 - **Disaggregated Choropleth Cartography (`d3.geoNaturalEarth1`)**:
   - Splits composite `MultiPolygon` features where overseas territories are merged with parent states in Natural Earth (for example, French Guiana `GUF` in South America is disaggregated from mainland France `FRA`, and Svalbard `SJM` is disaggregated from mainland Norway `NOR`).
-  - Uses a dedicated top-most SVG `<g id="focus-layer">` with `1.1px` `non-scaling-stroke` outlines so every edge of selected enclaves or bordered nations (such as Mongolia `MNG` and Lesotho `LSO`) renders cleanly above neighboring polygons.
+  - Uses fixed SVG layers for country fills, shared global borders, markers, selected borders, and labels. Selected enclaves and bordered nations (such as Mongolia `MNG` and Lesotho `LSO`) use `2px` non-scaling selected-border segments above the shared border layer.
   - Supports smooth pan/zoom with `scaleExtent([1, 16])` and dynamic zoom-compensated SVG labels.
 - **Three-Tier Jurisdiction Taxonomy & Distinct Marker Geometry**:
   - `"sovereign"` and `"constituent"` records (including `United Kingdom: Scotland (GBR-SCT)`, `United Kingdom: Northern Ireland (GBR-NIR)`, and `United Kingdom: England and Wales (GBR)`) render circular markers (`<circle class="sovereign-marker">`).
@@ -28,6 +28,7 @@ This project visualizes prison population rates per `100,000` inhabitants compil
   - **Deuteranomaly (Green-Weak)**: `['#56B4E9', '#F0E442', '#E69F00', '#D55E00', '#111111']`
   - **Tritanomaly (Blue-Weak)**: `['#FFFFFF', '#E5323B', '#B50D5F', '#4B0082', '#2E4052']`
   - **No Data (`N/A`)**: Rendered with a diagonal SVG hatch pattern (`#pattern-no-data`) over `#E2E8F0` in light mode and `#2D3748` in dark mode across both polygons and markers, and excluded from all numeric rankings and medians.
+  - **Show N/A Data**: In `Show All`, switches the explorer to a filtered list containing only jurisdictions without numeric data; rate range and sort controls are disabled, and unchecking restores the numeric chart and prior filter values.
 
 ---
 
@@ -35,7 +36,7 @@ This project visualizes prison population rates per `100,000` inhabitants compil
 
 - **D3.js v7** (`d3.geoNaturalEarth1`, `d3.geoPath`, `d3.zoom`, `d3.scaleLinear`, keyed data joins, transitions)
 - **TopoJSON Client v3** & **World Atlas 110m** (`world-atlas@2/countries-110m.json`)
-- **Layered SVG Architecture** (`.countries-layer`, `#focus-layer`, `.territories-layer`, `.selected-jurisdiction-label`)
+- **Layered SVG Architecture** (`.countries-layer`, `#global-borders`, `.territories-layer`, `#selected-borders`, `.selected-jurisdiction-label`)
 - **Vanilla HTML5 / CSS3 / ES6+ JavaScript** (zero framework or build-bundler overhead)
 - **Node.js Built-in Test Runner (`node:test`)** for automated data, rendering, and state synchronization verification
 
@@ -58,7 +59,7 @@ incarceration_rate_project/
 │   └── jurisdiction_mapping.json   # Canonical ISO mappings, taxonomy, bloc memberships, and disaggregation rules
 ├── js/
 │   ├── shared-constants.js         # Centralized state, palettes, taxonomy/bloc helpers, and pure filter functions
-│   ├── map.js                      # Projection, MultiPolygon disaggregation, focus layer, markers, and zoom
+│   ├── map.js                      # Projection, MultiPolygon disaggregation, shared borders, markers, and zoom
 │   ├── interactions.js             # Pinned/hover state machine, legend, bloc/toolbar filters, and D3 bar chart
 │   └── load-data.js                # CSV + mapping JSON loader and initialization bootstrap
 └── tests/

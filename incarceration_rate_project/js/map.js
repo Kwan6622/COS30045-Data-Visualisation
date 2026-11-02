@@ -148,10 +148,47 @@ const buildTerritoryFeatures = () => {
     return results;
 };
 
+const coordinateKey = point => `${Number(point[0]).toFixed(6)},${Number(point[1]).toFixed(6)}`;
+
+const isAntimeridianSegment = (a, b) => Math.abs(a[0]) >= 179.999 && Math.abs(b[0]) >= 179.999;
+
+const collectBoundarySegments = features => {
+    const segments = new Map();
+    const addRing = (ring, iso) => {
+        if (!Array.isArray(ring) || ring.length < 2) return;
+        for (let index = 0; index < ring.length - 1; index += 1) {
+            const a = ring[index];
+            const b = ring[index + 1];
+            if (!Array.isArray(a) || !Array.isArray(b) || isAntimeridianSegment(a, b)) continue;
+            const aKey = coordinateKey(a);
+            const bKey = coordinateKey(b);
+            const key = aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
+            const current = segments.get(key) || { a, b, isos: new Set() };
+            current.isos.add(iso);
+            segments.set(key, current);
+        }
+    };
+
+    features.forEach(feature => {
+        const iso = feature.properties?.iso || "";
+        const geometry = feature.geometry;
+        if (geometry?.type === "Polygon") geometry.coordinates.forEach(ring => addRing(ring, iso));
+        if (geometry?.type === "MultiPolygon") geometry.coordinates.forEach(polygon => polygon.forEach(ring => addRing(ring, iso)));
+    });
+    return Array.from(segments.values());
+};
+
+const segmentsToFeatureCollection = segments => ({
+    type: "FeatureCollection",
+    features: segments.map(segment => ({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: [segment.a, segment.b] },
+        properties: {}
+    }))
+});
+
 /**
- * Render the top-most SVG focus layer (<g id="focus-layer">) so every edge of pinned or hovered
- * jurisdictions (including enclaves and landlocked states like Mongolia and Lesotho) is rendered
- * cleanly above neighboring polygons without mutating the permanent country layer order.
+ * Render shared global borders and the selected/hovered country's own boundary segments.
  */
 const renderFocusLayer = () => {
     if (!appState.focusLayer || !geoPathGenerator) return;
@@ -164,23 +201,48 @@ const renderFocusLayer = () => {
         focusIsos.push({ iso: appState.hoveredJurisdictionId, role: "hovered" });
     }
 
-    const focusItems = focusIsos
-        .map(item => {
-            const feature = appState.featuresByIso.get(item.iso);
-            return feature ? { ...item, feature } : null;
-        })
-        .filter(Boolean);
+    const focusSegments = focusIsos.flatMap(item => {
+        const parts = appState.featuresByIsoParts.get(item.iso) || [];
+        return collectBoundarySegments(parts).map(segment => ({ ...segment, role: item.role, iso: item.iso }));
+    });
 
-    appState.focusLayer
-        .selectAll("path.focus-outline")
-        .data(focusItems, d => `${d.iso}-${d.role}`)
+    appState.focusLayer.selectAll("path.selected-border")
+        .data(focusSegments, d => `${d.iso}-${d.role}-${coordinateKey(d.a)}-${coordinateKey(d.b)}`)
         .join("path")
-        .attr("class", d => `focus-outline focus-outline-${d.role}`)
+        .attr("class", d => `selected-border selected-border-${d.role}`)
         .attr("data-iso", d => d.iso)
-        .attr("d", d => geoPathGenerator(d.feature))
+        .attr("d", d => geoPathGenerator({ type: "Feature", geometry: { type: "LineString", coordinates: [d.a, d.b] } }))
         .attr("fill", "none")
         .attr("vector-effect", "non-scaling-stroke")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
         .style("pointer-events", "none");
+};
+
+const renderGlobalBorders = () => {
+    if (!appState.borderLayer || !geoPathGenerator) return;
+    const segments = collectBoundarySegments(appState.features);
+    const internal = segments.filter(segment => segment.isos.size > 1);
+    const coast = segments.filter(segment => segment.isos.size === 1);
+
+    const renderLines = (selector, data, className) => {
+        appState.borderLayer.selectAll(selector)
+            .data(data, d => `${coordinateKey(d.a)}-${coordinateKey(d.b)}`)
+            .join("path")
+            .attr("class", className)
+            .attr("d", d => geoPathGenerator({
+                type: "Feature",
+                geometry: { type: "LineString", coordinates: [d.a, d.b] }
+            }))
+            .attr("fill", "none")
+            .attr("vector-effect", "non-scaling-stroke")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round")
+            .style("pointer-events", "none");
+    };
+
+    renderLines("path.global-internal-border", internal, "global-internal-border");
+    renderLines("path.global-coastline", coast, "global-coastline");
 };
 
 /**
@@ -476,6 +538,9 @@ const updateMapStyles = () => {
             const match = doesRowMatchActiveFilters(row, feature.properties?.name);
             return !match.matchesAll;
         })
+        .classed("pinned-context-dimmed", feature => Boolean(
+            pinnedIso && resolveFeatureIso(feature, appState.mappingConfig) !== pinnedIso
+        ))
         .classed("is-selected", feature => {
             const iso = resolveFeatureIso(feature, appState.mappingConfig);
             return Boolean(pinnedIso && iso === pinnedIso);
@@ -532,6 +597,7 @@ const renderMapGeography = rawAtlasFeatures => {
 
     appState.features = disaggregateAtlasFeatures(rawAtlasFeatures, appState.mappingConfig);
     appState.featuresByIso.clear();
+    appState.featuresByIsoParts.clear();
 
     appState.features.forEach(feature => {
         const iso = resolveFeatureIso(feature, appState.mappingConfig);
@@ -553,13 +619,17 @@ const renderMapGeography = rawAtlasFeatures => {
             if (row) {
                 feature.properties.csvRow = row;
             }
-            appState.featuresByIso.set(iso, feature);
+            if (!appState.featuresByIso.has(iso)) appState.featuresByIso.set(iso, feature);
+            const parts = appState.featuresByIsoParts.get(iso) || [];
+            parts.push(feature);
+            appState.featuresByIsoParts.set(iso, parts);
         }
     });
 
     appState.territoryFeatures = buildTerritoryFeatures();
+    renderGlobalBorders();
 
-    // 1. Render country & territory polygons
+    // 1. Render country fills only; borders are rendered in the shared line layer.
     appState.countriesLayer.selectAll("path.country")
         .data(appState.features, feature => feature.properties?.iso || feature.id || feature.properties?.name)
         .join("path")
@@ -745,8 +815,14 @@ const drawMap = (rawData, mappingConfig = DEFAULT_MAPPING_CONFIG, preloadedWorld
         });
 
     appState.countriesLayer = appState.mapGroup.append("g").attr("class", "countries-layer");
-    appState.focusLayer = appState.mapGroup.append("g").attr("id", "focus-layer");
+    appState.borderLayer = appState.mapGroup.append("g")
+        .attr("id", "global-borders")
+        .style("pointer-events", "none");
     appState.territoryGroup = appState.mapGroup.append("g").attr("class", "territories-layer");
+    appState.focusLayer = appState.mapGroup.append("g")
+        .attr("id", "selected-borders")
+        .attr("class", "focus-layer")
+        .style("pointer-events", "none");
     appState.labelGroup = appState.mapGroup.append("g")
         .attr("class", "selected-jurisdiction-label")
         .style("pointer-events", "none")

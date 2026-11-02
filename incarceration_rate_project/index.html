@@ -87,7 +87,7 @@
                         </div>
                         <div class="leaderboard-heading-actions">
                             <p id="leaderboard-summary" class="leaderboard-summary" aria-live="polite"></p>
-                            <div class="segmented-control" role="group" aria-label="Chart display limit">
+                            <div id="chart-view-toggle" class="segmented-control" role="group" aria-label="Chart display limit">
                                 <button id="view-top-15" class="segment-btn active" type="button" aria-pressed="true">Show Top 15</button>
                                 <button id="view-show-all" class="segment-btn" type="button" aria-pressed="false">Show All</button>
                             </div>
@@ -95,67 +95,71 @@
                     </div>
 
                     <div class="filter-toolbar" role="toolbar" aria-label="Unified filter and sort toolbar">
-                        <label class="toolbar-field" for="filter-continent">
-                            <span class="toolbar-label">Continent</span>
-                            <select id="filter-continent">
-                                <option value="All">All</option>
-                                <option value="Africa">Africa</option>
-                                <option value="Americas">Americas</option>
-                                <option value="Asia">Asia</option>
-                                <option value="Europe">Europe</option>
-                                <option value="Oceania">Oceania</option>
-                                <option value="Antarctica">Antarctica</option>
-                            </select>
-                        </label>
+                        <div class="filter-toolbar-row filter-toolbar-row-primary">
+                            <label class="toolbar-field" for="filter-continent">
+                                <span class="toolbar-label">Continent</span>
+                                <select id="filter-continent">
+                                    <option value="All">All</option>
+                                    <option value="Africa">Africa</option>
+                                    <option value="Americas">Americas</option>
+                                    <option value="Asia">Asia</option>
+                                    <option value="Europe">Europe</option>
+                                    <option value="Oceania">Oceania</option>
+                                    <option value="Antarctica">Antarctica</option>
+                                </select>
+                            </label>
 
-                        <label class="toolbar-field" for="filter-bloc">
-                            <span class="toolbar-label">Geopolitical &amp; Historical Blocs</span>
-                            <select id="filter-bloc">
-                                <option value="all">All / Reset</option>
-                                <option value="NATO">NATO</option>
-                                <option value="Post-Soviet States">Post-Soviet States</option>
-                                <option value="Former Yugoslavia">Former Yugoslavia</option>
-                                <option value="OECD">OECD</option>
-                                <option value="ASEAN">ASEAN</option>
-                            </select>
-                        </label>
+                            <label class="toolbar-field" for="filter-bloc">
+                                <span class="toolbar-label">Geopolitical &amp; Historical Blocs</span>
+                                <select id="filter-bloc">
+                                    <option value="all">All / Reset</option>
+                                    <option value="NATO">NATO</option>
+                                    <option value="Post-Soviet States">Post-Soviet States</option>
+                                    <option value="Former Yugoslavia">Former Yugoslavia</option>
+                                    <option value="OECD">OECD</option>
+                                    <option value="ASEAN">ASEAN</option>
+                                </select>
+                            </label>
 
-                        <label class="toolbar-field" for="filter-jurisdiction-type">
-                            <span class="toolbar-label">Jurisdiction type</span>
-                            <select id="filter-jurisdiction-type">
-                                <option value="all">All</option>
-                                <option value="sovereign">Sovereign Nations Only</option>
-                                <option value="constituent">Constituent Jurisdictions</option>
-                                <option value="overseas_autonomous">Overseas Territories &amp; Dependencies</option>
-                            </select>
-                        </label>
+                            <label id="show-no-data-control" class="toolbar-field checkbox-field" for="show-no-data">
+                                <input id="show-no-data" type="checkbox">
+                                <span class="toolbar-label">Show N/A Data</span>
+                            </label>
+                        </div>
 
-                        <label class="toolbar-field" for="filter-rate-range">
-                            <span class="toolbar-label">Rate range</span>
-                            <select id="filter-rate-range">
-                                <option value="all">All</option>
-                                <option value="under-100">&lt; 100</option>
-                                <option value="100-300">100–300</option>
-                                <option value="300-600">300–600</option>
-                                <option value="600-plus">600+</option>
-                            </select>
-                        </label>
+                        <div class="filter-toolbar-row filter-toolbar-row-secondary">
+                            <label class="toolbar-field" for="filter-jurisdiction-type">
+                                <span class="toolbar-label">Jurisdiction type</span>
+                                <select id="filter-jurisdiction-type">
+                                    <option value="all">All</option>
+                                    <option value="sovereign">Sovereign Nations Only</option>
+                                    <option value="constituent">Constituent Jurisdictions</option>
+                                    <option value="overseas_autonomous">Overseas Territories &amp; Dependencies</option>
+                                </select>
+                            </label>
 
-                        <label class="toolbar-field" for="filter-sort">
-                            <span class="toolbar-label">Sort</span>
-                            <select id="filter-sort">
-                                <option value="highest">Highest Rate</option>
-                                <option value="lowest">Lowest Rate</option>
-                                <option value="alphabetical">Alphabetical (A–Z)</option>
-                            </select>
-                        </label>
+                            <label class="toolbar-field" for="filter-rate-range">
+                                <span class="toolbar-label">Rate range</span>
+                                <select id="filter-rate-range">
+                                    <option value="all">All</option>
+                                    <option value="under-100">&lt; 100</option>
+                                    <option value="100-300">100–300</option>
+                                    <option value="300-600">300–600</option>
+                                    <option value="600-plus">600+</option>
+                                </select>
+                            </label>
 
-                        <label id="show-no-data-control" class="toolbar-field checkbox-field" for="show-no-data">
-                            <input id="show-no-data" type="checkbox">
-                            <span class="toolbar-label">Show N/A data</span>
-                        </label>
+                            <label class="toolbar-field" for="filter-sort">
+                                <span class="toolbar-label">Sort</span>
+                                <select id="filter-sort">
+                                    <option value="highest">Highest Rate</option>
+                                    <option value="lowest">Lowest Rate</option>
+                                    <option value="alphabetical">Alphabetical (A–Z)</option>
+                                </select>
+                            </label>
 
-                        <button id="reset-filter" class="button button-outline reset-filter-btn" type="button" disabled>Reset Filters</button>
+                            <button id="reset-filter" class="button button-outline reset-filter-btn" type="button" disabled>Reset Filters</button>
+                        </div>
                     </div>
 
                     <div id="chart-annotation" class="chart-annotation-panel" aria-label="Bar chart color and entity type explanation"></div>

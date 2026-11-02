@@ -354,12 +354,17 @@ const renderDetailsPanel = (feature, row, isTransientHover = false) => {
     const rankIndex = appState.rankedData.findIndex(item => item.iso === row.iso);
     const rankText = rankIndex >= 0 ? `#${rankIndex + 1} of ${appState.rankedData.length}` : "N/A";
     const globalMedian = appState.globalMedianRate || GLOBAL_MEDIAN_RATE;
+    const continentRows = appState.data.filter(item =>
+        item.continent === row.continent && Number.isFinite(item.rate)
+    );
+    const continentMedian = computeMedianRate(continentRows);
+    const continentLabel = row.continent || regionName;
 
     const ratioToMedian = row.rate >= globalMedian
         ? `${(row.rate / Math.max(globalMedian, 1)).toFixed(1)}× the global median (${Math.round(globalMedian)})`
         : `${(globalMedian / Math.max(row.rate, 1)).toFixed(1)}× below the global median (${Math.round(globalMedian)})`;
     const comparisonClass = row.rate >= globalMedian ? "comparison" : "comparison below";
-    const benchmarkMax = Math.max(row.rate, globalMedian, US_BENCHMARK_RATE, 1);
+    const benchmarkMax = Math.max(row.rate, continentMedian || 0, globalMedian, US_BENCHMARK_RATE, 1);
 
     panel.html(`
         <div class="panel-header-row">
@@ -374,13 +379,15 @@ const renderDetailsPanel = (feature, row, isTransientHover = false) => {
         <span class="${comparisonClass}">${escapeHtml(ratioToMedian)}</span>
         <dl class="stat-list">
             <div class="stat-row"><dt>Global rank</dt><dd>${escapeHtml(rankText)}</dd></div>
-            <div class="stat-row"><dt>Global Median</dt><dd>${d3.format(",.0f")(globalMedian)} per 100k</dd></div>
             <div class="stat-row"><dt>Jurisdiction type</dt><dd>${escapeHtml(jurisdictionCategory)}</dd></div>
             <div class="stat-row"><dt>Geopolitical blocs</dt><dd>${escapeHtml(blocsList)}</dd></div>
         </dl>
         <div class="benchmark">
             <h3>Benchmark comparison (per 100k)</h3>
             ${renderBenchmarkBarHtml(row.country, row.rate, benchmarkMax, true)}
+            ${continentMedian !== null
+                ? renderBenchmarkBarHtml(`${continentLabel} Median`, continentMedian, benchmarkMax, false)
+                : ""}
             ${renderBenchmarkBarHtml("Global Median", globalMedian, benchmarkMax, false)}
             ${renderBenchmarkBarHtml("United States", US_BENCHMARK_RATE, benchmarkMax, false)}
         </div>
@@ -491,7 +498,8 @@ const hasActiveFilters = () => appState.activeContinentFilter !== "All"
     || appState.rateRangeFilter !== "all"
     || appState.sortOrder !== "highest"
     || appState.selectedBucket !== null
-    || Boolean(appState.searchQuery);
+    || Boolean(appState.searchQuery)
+    || appState.showNoData;
 
 const updateResetFiltersState = () => {
     const active = hasActiveFilters();
@@ -521,6 +529,8 @@ const syncFilterControlsUI = () => {
         .classed("active", appState.chartViewLimit === "all")
         .attr("aria-pressed", appState.chartViewLimit === "all" ? "true" : "false");
 
+    d3.select("#chart-view-toggle")
+        .style("display", appState.showNoData ? "none" : null);
     d3.select("#chart-scroll-region")
         .classed("is-scrollable", appState.chartViewLimit === "all");
     d3.select("#show-no-data-control")
@@ -528,10 +538,18 @@ const syncFilterControlsUI = () => {
     d3.select("#show-no-data")
         .property("checked", Boolean(appState.showNoData))
         .property("disabled", appState.chartViewLimit !== "all");
+    d3.select("#filter-rate-range")
+        .property("disabled", Boolean(appState.showNoData))
+        .classed("is-disabled", Boolean(appState.showNoData));
+    d3.select("#filter-sort")
+        .property("disabled", Boolean(appState.showNoData))
+        .classed("is-disabled", Boolean(appState.showNoData));
 
     const titleEl = typeof document !== "undefined" ? document.getElementById("explorer-heading-title") : null;
     if (titleEl) {
-        titleEl.innerHTML = appState.chartViewLimit === "top15"
+        titleEl.innerHTML = appState.showNoData
+            ? `Jurisdictions with no data`
+            : appState.chartViewLimit === "top15"
             ? `Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`
             : `All matching <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`;
         setupGlossaryTooltips();
@@ -698,8 +716,9 @@ const setupControls = () => {
 
     d3.select("#show-no-data").on("change", event => {
         appState.showNoData = appState.chartViewLimit === "all" && event.target.checked;
-        renderBarChart();
+        updateMapStyles();
         syncFilterControlsUI();
+        renderBarChart();
     });
 
     d3.select("#reset-filter").on("click", resetAllFilters);
@@ -886,9 +905,67 @@ const renderChartAnnotation = () => {
  * Render and animate the responsive D3/SVG Horizontal Bar Chart (#jurisdiction-bar-chart).
  * Bound by canonical ISO code (d => d.iso). Excludes No Data records from rankings.
  */
+const renderNoDataList = () => {
+    const containerNode = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
+    if (!containerNode) return;
+
+    const rows = getNoDataJurisdictions();
+    const emptyStateEl = document.getElementById("chart-empty-state");
+    const summary = `Showing ${rows.length} jurisdictions with no data`;
+    d3.select("#leaderboard-summary").text(summary);
+    d3.select("#chart-annotation").style("display", "none");
+    d3.select(containerNode).selectAll("svg").remove();
+
+    if (emptyStateEl) {
+        emptyStateEl.hidden = rows.length > 0;
+        emptyStateEl.querySelector(".empty-state-title").textContent = "No jurisdictions with missing data match the active filters.";
+        emptyStateEl.querySelector(".empty-state-subtitle").textContent = "Try broadening the continent, geopolitical bloc, or jurisdiction type filter.";
+    }
+
+    if (!rows.length) {
+        d3.select(containerNode).selectAll(".no-data-list").remove();
+        updateResetFiltersState();
+        return;
+    }
+
+    const list = d3.select(containerNode)
+        .selectAll("div.no-data-list")
+        .data([rows])
+        .join("div")
+        .attr("class", "no-data-list")
+        .attr("role", "list")
+        .attr("aria-label", "Jurisdictions with no data");
+
+    list.selectAll("button.no-data-row")
+        .data(rows, d => d.iso)
+        .join(
+            enter => enter.append("button")
+                .attr("type", "button")
+                .attr("class", "no-data-row")
+                .attr("role", "listitem"),
+            update => update,
+            exit => exit.remove()
+        )
+        .html(row => `
+            <span class="no-data-name">${escapeHtml(row.country)}</span>
+            <span class="no-data-meta">${escapeHtml(row.continent || "Unknown")}</span>
+            <span class="no-data-meta">${escapeHtml(getJurisdictionCategoryLabel(row))}</span>
+            <span class="no-data-meta">${escapeHtml(row.blocs?.length ? row.blocs.join(", ") : "No bloc")}</span>
+            <span class="no-data-label">No data</span>
+        `)
+        .on("click", (event, row) => handleJurisdictionSelect(row, null, true, row.iso));
+
+    updateResetFiltersState();
+};
+
 const renderBarChart = (animate = true) => {
     const containerNode = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
     if (!containerNode || !appState.data.length) return;
+
+    if (appState.showNoData) {
+        renderNoDataList();
+        return;
+    }
 
     const allFilteredRows = getFilteredJurisdictions();
     const displayedRows = appState.chartViewLimit === "top15"
@@ -902,13 +979,19 @@ const renderBarChart = (animate = true) => {
         appState.activeContinentFilter
     );
     d3.select("#leaderboard-summary").text(telemetryText);
+    d3.select("#chart-annotation").style("display", null);
+    d3.select(containerNode).selectAll(".no-data-list").remove();
     updateResetFiltersState();
 
     // Handle empty state cleanly
     const emptyStateEl = document.getElementById("chart-empty-state");
     if (!displayedRows.length) {
         d3.select(containerNode).selectAll("svg").style("display", "none");
-        if (emptyStateEl) emptyStateEl.hidden = false;
+        if (emptyStateEl) {
+            emptyStateEl.hidden = false;
+            emptyStateEl.querySelector(".empty-state-title").textContent = "No jurisdictions match the active filters.";
+            emptyStateEl.querySelector(".empty-state-subtitle").textContent = "Try broadening the bloc, rate range, continent, or jurisdiction type filter.";
+        }
         return;
     }
     if (emptyStateEl) emptyStateEl.hidden = true;

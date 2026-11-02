@@ -13,9 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Geopolitical & Historical Blocs Filter (`NATO`, `Post-Soviet States`, `Former Yugoslavia`, `OECD`, `ASEAN`, `All / Reset`)**:
   - Added synchronized bloc filter controls in both the top control bar and the lower unified filter toolbar.
   - Dimming non-member map jurisdictions to `opacity: 0.15` while filtering the horizontal bar chart and showing the dataset-wide `Global Median`.
-- **Taxonomy-Driven Marker Geometry & Dedicated SVG Focus Layer (`<g id="focus-layer">`)**:
+- **Taxonomy-Driven Marker Geometry & Dedicated SVG Border Layers**:
   - Rendered `"sovereign"` and `"constituent"` records (including Scotland and Northern Ireland) as `<circle class="sovereign-marker">` and `"overseas_autonomous"` records as `<rect class="territory-marker">` centered on primary land centroids (including Greenland, French Guiana, Puerto Rico, and New Caledonia).
-  - Added `<g id="focus-layer">` above `.countries-layer` with `1.1px` `non-scaling-stroke` outlines so enclaves and bordered nations (such as Mongolia and Lesotho) are never partially occluded by neighboring polygons.
+  - Replaced per-country border strokes and the selected-country outline box with shared global internal/coastline border layers plus `<g id="selected-borders">`. Selected borders use non-scaling strokes and include every split country part.
   - Configured D3 zoom with `scaleExtent([1, 16])` and minimum `4px` CSS hit-target radii across all zoom levels.
 - **Five-Step Choropleth Ramp & Color-Vision Accessibility Presets**:
   - Updated default 5-step ramp to `['#FEE6D9', '#FCA289', '#F55B4B', '#C51B7D', '#67001F']` and added `Protanomaly (Red-Weak)`, `Deuteranomaly (Green-Weak)`, and `Tritanomaly (Blue-Weak)` 5-color ramps, plus light (`#E2E8F0`) and dark (`#2D3748`) diagonal hatch treatments for `No Data`.

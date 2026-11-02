@@ -468,6 +468,7 @@ const appState = {
     hoveredJurisdiction: null,
     features: [],
     featuresByIso: new Map(),
+    featuresByIsoParts: new Map(),
     territoryFeatures: [],
     markersByIso: new Map(),
     projection: typeof d3 !== "undefined" && d3.geoNaturalEarth1 ? d3.geoNaturalEarth1() : null,
@@ -477,6 +478,8 @@ const appState = {
     mapGroup: null,
     countriesLayer: null,
     focusLayer: null,
+    borderLayer: null,
+    selectedBordersLayer: null,
     territoryGroup: null,
     labelGroup: null,
     svg: null,
@@ -786,10 +789,15 @@ const disaggregateAtlasFeatures = (rawFeatures, mappingConfig = appState.mapping
  * Check if a canonical jurisdiction record matches all active filters
  * (Continent, Geopolitical Bloc, Jurisdiction Type, Rate Range, Stepped Bucket, Search).
  */
-const doesRowMatchActiveFilters = (row, featureName = "") => {
+const doesRowMatchActiveFilters = (row, featureName = "", options = {}) => {
     const activeBucketKey = appState.hoveredBucket || appState.selectedBucket;
     const rowBucket = bucketForRate(row ? row.rate : null);
     const effectiveRegion = featureName === "Antarctica" ? "Antarctica" : (row ? regionForJurisdiction(row) : "Unknown");
+    const dataAvailabilityMatch = options.ignoreShowNoData
+        || !appState.showNoData
+        || appState.chartViewLimit !== "all"
+        || !row
+        || !Number.isFinite(row.rate);
 
     const continentMatch = appState.activeContinentFilter === "All"
         || effectiveRegion === appState.activeContinentFilter
@@ -813,10 +821,10 @@ const doesRowMatchActiveFilters = (row, featureName = "") => {
         }
     }
 
-    const rangeMatch = appState.rateRangeFilter === "all"
+    const rangeMatch = options.ignoreRateFilters || appState.rateRangeFilter === "all"
         || (row ? matchesRateRangeFilter(row.rate, appState.rateRangeFilter) : false);
 
-    const bucketMatch = !activeBucketKey || rowBucket.key === activeBucketKey;
+    const bucketMatch = options.ignoreRateFilters || !activeBucketKey || rowBucket.key === activeBucketKey;
 
     const query = appState.searchQuery;
     const searchMatch = !query
@@ -834,20 +842,21 @@ const doesRowMatchActiveFilters = (row, featureName = "") => {
         rangeMatch,
         bucketMatch,
         searchMatch,
-        matchesAll: continentMatch && blocMatch && typeMatch && rangeMatch && bucketMatch && searchMatch
+        dataAvailabilityMatch,
+        matchesAll: continentMatch && blocMatch && typeMatch && rangeMatch && bucketMatch && searchMatch && dataAvailabilityMatch
     };
 };
 
 /**
  * Return filtered and sorted records for the horizontal bar chart explorer.
- * No Data records are included only when Show All + Show N/A data are active.
+ * The chart always contains numeric rates. Show N/A data filters the map to
+ * missing-rate jurisdictions without adding N/A rows to the chart.
  */
 const getFilteredJurisdictions = () => {
     const activeBucketKey = appState.selectedBucket;
     return appState.data
-        .filter(row => Number.isFinite(row.rate)
-            || (appState.chartViewLimit === "all" && appState.showNoData))
-        .filter(row => doesRowMatchActiveFilters(row, row.country).matchesAll)
+        .filter(row => Number.isFinite(row.rate))
+        .filter(row => doesRowMatchActiveFilters(row, row.country, { ignoreShowNoData: true }).matchesAll)
         .filter(row => {
             if (!activeBucketKey) return true;
             return bucketForRate(row.rate).key === activeBucketKey;
@@ -865,6 +874,17 @@ const getFilteredJurisdictions = () => {
             return (b.rate - a.rate) || a.country.localeCompare(b.country);
         });
 };
+
+/**
+ * Return only missing-rate records for the dedicated Show N/A view.
+ */
+const getNoDataJurisdictions = () => appState.data
+    .filter(row => !Number.isFinite(row.rate))
+    .filter(row => doesRowMatchActiveFilters(row, row.country, {
+        ignoreShowNoData: true,
+        ignoreRateFilters: true
+    }).matchesAll)
+    .sort((a, b) => a.country.localeCompare(b.country));
 
 /**
  * Compute median rate strictly from finite numeric rates.
@@ -935,6 +955,7 @@ if (typeof module !== "undefined" && module.exports) {
         disaggregateAtlasFeatures,
         doesRowMatchActiveFilters,
         getFilteredJurisdictions,
+        getNoDataJurisdictions,
         computeMedianRate,
         formatSummaryTelemetry
     };

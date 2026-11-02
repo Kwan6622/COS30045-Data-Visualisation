@@ -527,8 +527,7 @@ h1 {
 }
 
 .country {
-    stroke: var(--country-stroke);
-    stroke-width: 0.55px;
+    stroke: none;
     cursor: pointer;
     vector-effect: non-scaling-stroke;
     transition: opacity 0.18s ease;
@@ -543,33 +542,56 @@ h1 {
 }
 
 .country.search-match {
-    stroke: var(--accent);
-    stroke-width: 1.1px;
     opacity: 1;
 }
 
-/* Dedicated SVG Focus Layer (<g id="focus-layer">) */
-#focus-layer {
+/* Shared borders sit above fills and below markers and selected borders. */
+#global-borders,
+#global-borders * {
     pointer-events: none;
 }
 
-.focus-outline {
-    fill: none;
-    stroke: var(--map-label);
-    stroke-width: 1.1px;
+#global-borders path {
     vector-effect: non-scaling-stroke;
-    pointer-events: none;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
-.focus-outline-hovered {
-    stroke-width: 1.0px;
-    stroke-dasharray: none;
+.global-internal-border {
+    stroke: #3B4252;
+    stroke-width: 0.8px;
 }
 
-.focus-outline-pinned {
-    stroke-width: 1.15px;
+.global-coastline {
+    stroke: #64748B;
+    stroke-width: 0.6px;
+}
+
+/* Selected and hovered borders are separate from the shared global mesh. */
+#selected-borders,
+#selected-borders * {
+    pointer-events: none;
+}
+
+.selected-border {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.selected-border-hovered {
+    stroke: var(--focus-ring);
+    stroke-width: 1.3px;
+}
+
+.selected-border-pinned {
+    stroke: #111827;
+    stroke-width: 2px;
+}
+
+.country.pinned-context-dimmed {
+    opacity: 0.65;
 }
 
 /* Markers: circle.sovereign-marker & rect.territory-marker */
@@ -961,9 +983,8 @@ body.dark-mode .segment-btn.active {
 
 /* Unified Filter Toolbar */
 .filter-toolbar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 2fr) minmax(0, 1fr) minmax(112px, auto);
     gap: 10px;
     padding: 11px 12px;
     margin-bottom: 14px;
@@ -972,8 +993,42 @@ body.dark-mode .segment-btn.active {
     border-radius: 5px;
 }
 
+.filter-toolbar-row {
+    display: contents;
+}
+
+.filter-toolbar-row-primary > .toolbar-field:nth-child(1) {
+    grid-column: 1;
+}
+
+.filter-toolbar-row-primary > .toolbar-field:nth-child(2) {
+    grid-column: 2;
+}
+
+.filter-toolbar-row-primary > .toolbar-field:nth-child(3) {
+    grid-column: 3;
+}
+
+.filter-toolbar-row-secondary > .toolbar-field:nth-child(1) {
+    grid-column: 1;
+}
+
+.filter-toolbar-row-secondary > .toolbar-field:nth-child(2) {
+    grid-column: 2;
+}
+
+.filter-toolbar-row-secondary > .toolbar-field:nth-child(3) {
+    grid-column: 3;
+}
+
+.filter-toolbar-row-secondary > .reset-filter-btn {
+    grid-column: 4;
+}
+
 .toolbar-field {
     display: inline-flex;
+    width: 100%;
+    min-width: 0;
     align-items: center;
     gap: 7px;
     height: 34px;
@@ -1004,6 +1059,8 @@ body.dark-mode .segment-btn.active {
 }
 
 .toolbar-field select {
+    min-width: 0;
+    flex: 1 1 auto;
     border: 0;
     outline: 0;
     background: var(--surface);
@@ -1014,9 +1071,57 @@ body.dark-mode .segment-btn.active {
 }
 
 .reset-filter-btn {
-    margin-left: auto;
     height: 34px;
     font-size: 11.5px;
+    width: 100%;
+}
+
+.toolbar-field.is-disabled {
+    opacity: 0.5;
+}
+
+.no-data-list {
+    display: grid;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.no-data-row {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.5fr) minmax(90px, 1fr) minmax(130px, 1.2fr) minmax(120px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+}
+
+.no-data-row:hover,
+.no-data-row:focus-visible {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.no-data-name {
+    font-weight: 700;
+}
+
+.no-data-meta {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.no-data-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 /* Horizontal Bar Chart Region */
@@ -1380,17 +1485,33 @@ body.dark-mode .load-error {
     }
 
     .filter-toolbar {
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
-    .toolbar-field {
-        flex: 1 1 calc(50% - 10px);
-        justify-content: space-between;
+    .filter-toolbar-row-primary > .toolbar-field,
+    .filter-toolbar-row-secondary > .toolbar-field,
+    .filter-toolbar-row-secondary > .reset-filter-btn {
+        grid-column: auto;
+    }
+
+    .filter-toolbar-row-primary > .toolbar-field:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+
+    .filter-toolbar-row-secondary > .reset-filter-btn {
+        grid-column: 1 / -1;
     }
 
     .reset-filter-btn {
-        flex: 1 1 100%;
-        margin-left: 0;
+        width: 100%;
+    }
+
+    .no-data-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .no-data-label {
+        grid-column: 2;
     }
 
     .methodology {

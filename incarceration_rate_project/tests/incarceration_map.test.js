@@ -869,17 +869,16 @@ test("Phase 2, 3 & 5 — Rendering & binding: marker geometry, FRA/GUF disaggreg
     assert.equal(patternRectDark.getAttribute("fill"), "#2D3748", "Dark mode No Data base must be #2D3748");
     document.body.classList.remove("dark-mode");
 
-    // Verify #focus-layer renders Mongolia (MNG) and Lesotho (LSO) outlines on top without mutating country layer order
+    // Verify #selected-borders renders Mongolia (MNG) and Lesotho (LSO) borders without mutating country layer order
     const initialCountryOrder = document.querySelectorAll("path.country").map(p => p.getAttribute("data-iso"));
     const mngPath = countryPaths.find(p => p.getAttribute("data-iso") === "MNG");
     mngPath.dispatchEvent("click");
-    const focusOutlines = document.querySelectorAll("#focus-layer path.focus-outline");
-    assert.equal(focusOutlines.length, 1);
-    assert.equal(focusOutlines[0].getAttribute("data-iso"), "MNG");
+    const focusOutlines = document.querySelectorAll("#selected-borders path.selected-border");
+    assert.ok(focusOutlines.length > 0);
+    assert.ok(Array.from(focusOutlines).every(path => path.getAttribute("data-iso") === "MNG"));
     assert.equal(focusOutlines[0].getAttribute("vector-effect"), "non-scaling-stroke");
     const afterCountryOrder = document.querySelectorAll("path.country").map(p => p.getAttribute("data-iso"));
     assert.deepEqual(afterCountryOrder, initialCountryOrder, "Permanent country layer ordering must not be mutated");
-
     // Verify minimum hit target radius >= 4 CSS pixels at max zoom k=16
     context.syncElementsWithZoom({ k: 16, x: 0, y: 0 });
     const hitTargets = document.querySelectorAll("circle.jurisdiction-hit-target");
@@ -1025,9 +1024,9 @@ test("Phase 3 & Validation — Palettes, Lesotho enclave outline, and representa
         );
         // North Korea (No Data) must retain url(#pattern-no-data) across all palettes
         assert.equal(prkPath.getAttribute("fill"), "url(#pattern-no-data)");
-        // Focus outline for Lesotho must remain intact in #focus-layer
-        const focusOutlines = document.querySelectorAll("#focus-layer path.focus-outline");
-        assert.equal(focusOutlines.length, 1);
-        assert.equal(focusOutlines[0].getAttribute("data-iso"), "LSO");
+        // Selected border for Lesotho must remain intact in #selected-borders
+        const focusOutlines = document.querySelectorAll("#selected-borders path.selected-border");
+        assert.ok(focusOutlines.length > 0);
+        assert.ok(Array.from(focusOutlines).every(path => path.getAttribute("data-iso") === "LSO"));
     }
 });

@@ -72,11 +72,16 @@ Thirty-two jurisdictions in `data/prison_pop_rate.csv` (such as `North Korea (PR
 
 - **Cartographic Retention**: `No Data` jurisdictions remain in `appState.data` and remain interactive on the map so landmass geometry is never dropped.
 - **Visual Encoding**: Both polygons and markers with `rate === null` are filled with `url(#pattern-no-data)`—a diagonal SVG hatch pattern over `#E2E8F0` in light mode and `#2D3748` in dark mode.
-- **Statistical Exclusion**: `No Data` records (`!Number.isFinite(record.rate)`) are strictly excluded from ordinal rankings (`appState.rankedData`), the horizontal bar chart (`getFilteredJurisdictions()`), and the dataset-wide `Global Median` (`computeMedianRate()`).
+- **Statistical Exclusion**: `No Data` records (`!Number.isFinite(record.rate)`) are strictly excluded from ordinal rankings (`appState.rankedData`), the horizontal bar chart (`getFilteredJurisdictions()`), the dataset-wide `Global Median`, and continent medians shown in the benchmark comparison. Both medians use `computeMedianRate()` on valid numeric observations only.
+- **Show N/A filter**: In `Show All`, the `Show N/A Data` checkbox is aligned with the geopolitical filter and switches the explorer to an exclusive missing-rate list. It applies continent, bloc, jurisdiction-type, and search filters, disables rate-dependent controls, hides the numeric chart, and does not alter the saved numeric filter values. Missing-rate records remain excluded from ranking and median calculations.
+
+## 6. Border Rendering
+
+Country fills are rendered without individual strokes. A shared, non-scaling border layer draws deduplicated internal boundaries and coastlines above all fills, while a separate selected-border layer emphasizes every polygon part belonging to a pinned or hovered ISO code. Antimeridian seam segments are excluded so split countries do not acquire artificial vertical map-edge borders.
 
 ---
 
-## 6. Geopolitical & Historical Bloc Memberships
+## 7. Geopolitical & Historical Bloc Memberships
 
 Each jurisdiction record includes a `blocs: string[]` array populated from `blocMemberships` in `data/jurisdiction_mapping.json`. A jurisdiction may belong to multiple blocs simultaneously (e.g., `FRA` and `USA` belong to both `NATO` and `OECD`; `EST`, `LVA`, and `LTU` belong to `NATO`, `OECD`, and `Post-Soviet States`; `HRV`, `MNE`, `MKD`, and `SVN` belong to both `NATO` and `Former Yugoslavia`):
 

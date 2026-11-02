@@ -21,7 +21,7 @@ This project visualizes prison population rates per `100,000` inhabitants compil
   - Clicking the ocean background, `Unpin ×`, or `Reset view` clears the pin.
 - **Geopolitical & Historical Blocs & Unified Filter Toolbar**:
   - Filter by **Geopolitical & Historical Blocs** (`All / Reset`, `NATO`, `Post-Soviet States`, `Former Yugoslavia`, `OECD`, `ASEAN`) intersected with **Continent**, **Jurisdiction type**, **Rate range** (`< 100`, `100–300`, `300–600`, `600+`), and **Sort** (`Highest Rate`, `Lowest Rate`, `Alphabetical (A–Z)`).
-  - Active filters dim non-matching map geometry to `opacity: 0.15`, filter the responsive D3 horizontal bar chart (`Show Top 15` / `Show All`), and update telemetry in the format `Showing X jurisdictions in [Bloc] — Median Rate: Y per 100k` (Where `X` counts matched jurisdictions with finite numeric rates).
+  - Active filters dim non-matching map geometry to `opacity: 0.15`, filter the responsive D3 horizontal bar chart (`Show Top 15` / `Show All`), and show the dataset-wide `Global Median` benchmark (where `X` counts matched jurisdictions with finite numeric rates).
 - **Five-Step Choropleth Ramp, No Data Hatching & Color-Vision Accessibility Presets**:
   - **Default (Orange–Red–Purple)**: `['#FEE6D9', '#FCA289', '#F55B4B', '#C51B7D', '#67001F']`
   - **Protanomaly (Red-Weak)**: `['#F0F0F0', '#E69F00', '#D55E00', '#CC79A7', '#004949']`

@@ -199,7 +199,9 @@ const computeJurisdictionLabelPosition = (row, feature) => {
     }
 
     // 2. Use polygon centroid if a polygon feature exists
-    const polyFeature = (iso && appState.featuresByIso.get(iso)) || (feature?.geometry?.type !== "Point" ? feature : null);
+    const polyFeature = iso === "FJI"
+        ? null
+        : ((iso && appState.featuresByIso.get(iso)) || (feature?.geometry?.type !== "Point" ? feature : null));
     if (polyFeature && geoPathGenerator) {
         const centroid = geoPathGenerator.centroid(polyFeature);
         if (centroid && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
@@ -534,6 +536,18 @@ const renderMapGeography = rawAtlasFeatures => {
     appState.features.forEach(feature => {
         const iso = resolveFeatureIso(feature, appState.mappingConfig);
         if (iso) {
+            // Fiji straddles the antimeridian. Keep its western islands in the
+            // eastern map copy so the country and its click target stay together.
+            if (iso === "FJI" && feature.geometry?.coordinates) {
+                const shiftLongitude = coordinates => {
+                    if (Array.isArray(coordinates) && typeof coordinates[0] === "number") {
+                        if (coordinates[0] < 0) coordinates[0] += 360;
+                        return;
+                    }
+                    if (Array.isArray(coordinates)) coordinates.forEach(shiftLongitude);
+                };
+                shiftLongitude(feature.geometry.coordinates);
+            }
             feature.properties.iso = iso;
             const row = appState.dataByIso.get(iso);
             if (row) {

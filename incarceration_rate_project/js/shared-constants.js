@@ -7,7 +7,7 @@ const MAP_HEIGHT = 560;
 const MAP_MARGIN = { top: 14, right: 16, bottom: 14, left: 16 };
 const ZOOM_SCALE_EXTENT = [1, 16];
 const MIN_HIT_RADIUS_PX = 4;
-const GLOBAL_MEDIAN_RATE = 140;
+const GLOBAL_MEDIAN_RATE = 145;
 const US_BENCHMARK_RATE = 542;
 
 const NO_DATA_COLORS = {
@@ -31,48 +31,28 @@ const RATE_BUCKETS = [
 ];
 
 /**
- * Centralized 5-step choropleth palettes (Default + 3 Color-Vision Accessibility Presets).
+ * Centralized 5-step choropleth palettes.
  */
 const PALETTES = {
     default: {
-        name: "Default (Orange–Red–Purple)",
+        name: "Default Palette",
         colors: ["#FEE6D9", "#FCA289", "#F55B4B", "#C51B7D", "#67001F"],
-        textDarkUntilStep: 1,
+        textDarkUntilStep: 2,
         accent: "#C51B7D",
         accentDark: "#FCA289",
         barDefault: "#C51B7D",
         barHover: "#67001F",
         barSelected: "#67001F"
     },
-    protanomaly: {
-        name: "Protanomaly (Red-Weak)",
-        colors: ["#F0F0F0", "#E69F00", "#D55E00", "#CC79A7", "#004949"],
-        textDarkUntilStep: 1,
-        accent: "#D55E00",
-        accentDark: "#E69F00",
-        barDefault: "#D55E00",
-        barHover: "#004949",
-        barSelected: "#004949"
-    },
-    deuteranomaly: {
-        name: "Deuteranomaly (Green-Weak)",
-        colors: ["#56B4E9", "#F0E442", "#E69F00", "#D55E00", "#111111"],
+    colorblind: {
+        name: "Colorblind Mode",
+        colors: ["#FEE838", "#BCAF6F", "#7C7B78", "#35456C", "#00224E"],
         textDarkUntilStep: 2,
-        accent: "#D55E00",
-        accentDark: "#56B4E9",
-        barDefault: "#56B4E9",
-        barHover: "#D55E00",
-        barSelected: "#111111"
-    },
-    tritanomaly: {
-        name: "Tritanomaly (Blue-Weak)",
-        colors: ["#FFFFFF", "#E5323B", "#B50D5F", "#4B0082", "#2E4052"],
-        textDarkUntilStep: 0,
-        accent: "#B50D5F",
-        accentDark: "#E5323B",
-        barDefault: "#B50D5F",
-        barHover: "#4B0082",
-        barSelected: "#2E4052"
+        accent: "#35456C",
+        accentDark: "#BCAF6F",
+        barDefault: "#35456C",
+        barHover: "#00224E",
+        barSelected: "#00224E"
     }
 };
 
@@ -422,6 +402,7 @@ const DEFAULT_MAPPING_CONFIG = {
         "XSO": { lon: 45.50, lat: 9.80, hitRadius: 6 }
     },
     labelAnchorByIso: {
+        "FJI": [178.07, -17.71],
         "USA": [-98.5, 38.5],
         "FRA": [2.4, 46.6],
         "GUF": [-53.13, 3.93],
@@ -469,6 +450,7 @@ const appState = {
     dataByExactName: new Map(),
     dataByNormalisedName: new Map(),
     rankedData: [],
+    globalMedianRate: GLOBAL_MEDIAN_RATE,
     palette: "default",
     selectedBucket: null,
     hoveredBucket: null,
@@ -478,6 +460,7 @@ const appState = {
     rateRangeFilter: "all",
     sortOrder: "highest",
     chartViewLimit: "top15",
+    showNoData: false,
     searchQuery: "",
     pinnedJurisdictionId: null,
     hoveredJurisdictionId: null,
@@ -621,6 +604,7 @@ const enrichDataset = (rawRows, mappingConfig = appState.mappingConfig) => {
             if (b.rate !== a.rate) return b.rate - a.rate;
             return a.country.localeCompare(b.country);
         });
+    appState.globalMedianRate = computeMedianRate(enriched) || GLOBAL_MEDIAN_RATE;
 
     return enriched;
 };
@@ -855,19 +839,23 @@ const doesRowMatchActiveFilters = (row, featureName = "") => {
 };
 
 /**
- * Return filtered and sorted numeric records for the horizontal bar chart explorer.
- * Excludes No Data records from all numeric rankings.
+ * Return filtered and sorted records for the horizontal bar chart explorer.
+ * No Data records are included only when Show All + Show N/A data are active.
  */
 const getFilteredJurisdictions = () => {
     const activeBucketKey = appState.selectedBucket;
     return appState.data
-        .filter(row => Number.isFinite(row.rate))
+        .filter(row => Number.isFinite(row.rate)
+            || (appState.chartViewLimit === "all" && appState.showNoData))
         .filter(row => doesRowMatchActiveFilters(row, row.country).matchesAll)
         .filter(row => {
             if (!activeBucketKey) return true;
             return bucketForRate(row.rate).key === activeBucketKey;
         })
         .sort((a, b) => {
+            const aHasRate = Number.isFinite(a.rate);
+            const bHasRate = Number.isFinite(b.rate);
+            if (aHasRate !== bHasRate) return aHasRate ? -1 : 1;
             if (appState.sortOrder === "lowest") {
                 return (a.rate - b.rate) || a.country.localeCompare(b.country);
             }
@@ -897,14 +885,12 @@ const computeMedianRate = records => {
 };
 
 /**
- * Format summary telemetry string in the required contract:
- * "Showing X jurisdictions in [Bloc/Scope] — Median Rate: Y per 100k"
- * Here X counts matched jurisdictions with valid finite numeric rates.
+ * Format summary telemetry using the one global benchmark.
  */
 const formatSummaryTelemetry = (numericRecords, activeBloc = appState.activeBloc, activeContinent = appState.activeContinentFilter) => {
     const count = Array.isArray(numericRecords) ? numericRecords.length : 0;
-    const median = computeMedianRate(numericRecords);
-    const medianStr = median !== null ? `${Math.round(median).toLocaleString("en-US")} per 100k` : "No data";
+    const globalMedian = appState.globalMedianRate || GLOBAL_MEDIAN_RATE;
+    const medianStr = `${Math.round(globalMedian).toLocaleString("en-US")} per 100k`;
 
     let scopeLabel = "All Jurisdictions";
     if (activeBloc && activeBloc !== "all" && activeContinent && activeContinent !== "All") {
@@ -915,7 +901,7 @@ const formatSummaryTelemetry = (numericRecords, activeBloc = appState.activeBloc
         scopeLabel = activeContinent;
     }
 
-    return `Showing ${count} jurisdictions in ${scopeLabel} — Median Rate: ${medianStr}`;
+    return `Showing ${count} jurisdictions in ${scopeLabel} — Global Median: ${medianStr}`;
 };
 
 if (typeof module !== "undefined" && module.exports) {

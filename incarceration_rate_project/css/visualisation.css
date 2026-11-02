@@ -4,7 +4,8 @@
     --line: #e2e8f0;
     --surface: #ffffff;
     --surface-subtle: #f8fafc;
-    --map-ocean: #eef4f9;
+    --map-ocean: #DCEAF2;
+    --country-stroke: #9AA3B2;
     --accent: #C51B7D;
     --map-label: #0f172a;
     --placeholder: #94a3b8;
@@ -24,6 +25,7 @@ body.dark-mode {
     --surface: #131c2e;
     --surface-subtle: #1e293b;
     --map-ocean: #1b283d;
+    --country-stroke: #64748b;
     --map-label: #f8fafc;
     --placeholder: #64748b;
     --accent: #FCA289;
@@ -46,7 +48,7 @@ body.dark-mode {
 .header-inner,
 .page-shell,
 .footer-inner {
-    width: min(1240px, calc(100% - 48px));
+    width: min(1320px, calc(100% - 48px));
     margin: 0 auto;
 }
 
@@ -369,6 +371,48 @@ h1 {
     gap: 4px;
 }
 
+.entity-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 22px;
+    padding: 8px 0 18px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.entity-legend-title {
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.entity-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.entity-marker {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+    border: 2px solid currentColor;
+    background: var(--surface);
+}
+
+.entity-marker-circle {
+    border-radius: 50%;
+}
+
+.entity-marker-square {
+    border-radius: 1px;
+}
+
 .legend-item {
     position: relative;
     min-height: 48px;
@@ -411,6 +455,14 @@ h1 {
     display: block;
     font-size: 9.5px;
     opacity: 0.85;
+}
+
+.accessibility-note {
+    max-width: 780px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
 }
 
 /* Main Layout */
@@ -475,8 +527,8 @@ h1 {
 }
 
 .country {
-    stroke: var(--surface);
-    stroke-width: 0.5px;
+    stroke: var(--country-stroke);
+    stroke-width: 0.55px;
     cursor: pointer;
     vector-effect: non-scaling-stroke;
     transition: opacity 0.18s ease;
@@ -932,6 +984,16 @@ body.dark-mode .segment-btn.active {
     font-size: 11.5px;
 }
 
+.checkbox-field {
+    gap: 8px;
+}
+
+.checkbox-field input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
 .toolbar-label {
     color: var(--muted);
     font-size: 10.5px;
@@ -988,6 +1050,102 @@ body.dark-mode .segment-btn.active {
     stroke-dasharray: 2, 2;
 }
 
+.chart-grid-group line.major-gridline {
+    stroke: var(--muted);
+    stroke-width: 1.1px;
+    stroke-dasharray: none;
+}
+
+.chart-annotation {
+    fill: var(--muted);
+    font-size: 9.5px;
+    font-weight: 600;
+}
+
+.chart-annotation-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px 18px;
+    max-width: 100%;
+    margin: 0 0 12px;
+    padding: 9px 11px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.chart-annotation-group {
+    display: none;
+}
+
+.chart-annotation-section {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px 10px;
+}
+
+.chart-annotation-section + .chart-annotation-section {
+    padding-left: 16px;
+    border-left: 1px solid var(--line);
+}
+
+.chart-annotation-title {
+    color: var(--ink);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.chart-annotation-square {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    flex: 0 0 10px;
+    background: var(--bar);
+    border: 1px solid var(--ink);
+}
+
+.chart-annotation-swatch {
+    display: inline-block;
+    width: 13px;
+    height: 10px;
+    flex: 0 0 13px;
+    border: 1px solid rgba(15, 23, 42, 0.25);
+}
+
+.chart-annotation-title {
+    fill: var(--ink);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.chart-annotation-marker {
+    stroke: var(--ink);
+    stroke-width: 1.2px;
+    fill: var(--surface);
+}
+
+.chart-annotation-swatch {
+    stroke: rgba(15, 23, 42, 0.2);
+    stroke-width: 0.5px;
+}
+
+.chart-label-marker {
+    stroke: var(--ink);
+    stroke-width: 0.8px;
+    fill: var(--bar);
+}
+
+.chart-label-marker.territory {
+    fill: var(--bar);
+}
+
 .chart-axis-top path,
 .chart-axis-bottom path,
 .chart-axis-top line,
@@ -1027,6 +1185,12 @@ body.dark-mode .segment-btn.active {
     transition: filter 0.15s ease, stroke 0.15s ease;
 }
 
+.chart-bar-rect.no-data-bar {
+    fill: var(--no-data-base);
+    stroke: var(--no-data-stroke);
+    stroke-dasharray: 3, 2;
+}
+
 .chart-y-label {
     fill: var(--ink);
     font-size: 11.5px;
@@ -1053,8 +1217,8 @@ body.dark-mode .segment-btn.active {
 .chart-bar-group:hover .chart-bar-rect,
 .chart-bar-group.is-hovered .chart-bar-rect {
     stroke: var(--ink);
-    stroke-width: 1.2px;
-    filter: brightness(0.95);
+    stroke-width: 2px;
+    filter: none;
 }
 
 .chart-bar-group.is-selected .chart-row-bg {
@@ -1067,7 +1231,13 @@ body.dark-mode .segment-btn.active {
 
 .chart-bar-group.is-selected .chart-bar-rect {
     stroke: var(--ink);
-    stroke-width: 1.5px;
+    stroke-width: 3px;
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.3));
+}
+
+.chart-bar-group.is-selected.is-hovered .chart-bar-rect {
+    stroke-width: 3px;
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.3));
 }
 
 .chart-bar-group.is-selected .chart-y-label,
@@ -1163,7 +1333,7 @@ body.dark-mode .load-error {
     .header-inner,
     .page-shell,
     .footer-inner {
-        width: min(100% - 28px, 1240px);
+        width: min(100% - 28px, 1320px);
     }
 
     .page-shell {
@@ -1180,6 +1350,21 @@ body.dark-mode .load-error {
 
     .stepped-legend {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .entity-legend {
+        align-items: flex-start;
+        gap: 10px 16px;
+    }
+
+    .chart-annotation-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart-annotation-section + .chart-annotation-section {
+        padding-left: 0;
+        border-left: 0;
     }
 
     .legend-heading,

@@ -969,11 +969,11 @@ test("Phase 4 & 5 — State & synchronization: pinned sidebar lock, tooltip deco
         const chnPath = countryPaths.find(p => p.getAttribute("data-iso") === "CHN");
         assert.ok(chnPath.classes.has("dimmed"), `Non-member CHN must be dimmed when ${blocName} is active`);
 
-        // Telemetry format check: "Showing X jurisdictions in [Bloc] — Median Rate: Y per 100k"
+        // Telemetry format check uses the one global benchmark.
         const summaryText = document.getElementById("leaderboard-summary").textContent;
         assert.match(
             summaryText,
-            new RegExp(`^Showing ${filteredRows.length} jurisdictions in ${blocName} — Median Rate: [0-9,]+ per 100k$`),
+            new RegExp(`^Showing ${filteredRows.length} jurisdictions in ${blocName} — Global Median: [0-9,]+ per 100k$`),
             `Telemetry mismatch for ${blocName}: ${summaryText}`
         );
     }
@@ -989,7 +989,7 @@ test("Phase 4 & 5 — State & synchronization: pinned sidebar lock, tooltip deco
     assert.equal(context.computeMedianRate([{ rate: 100 }, { rate: null }, { rate: 200 }, { rate: 300 }]), 200);
     assert.equal(
         context.formatSummaryTelemetry([], "NATO", "All"),
-        "Showing 0 jurisdictions in NATO — Median Rate: No data"
+        "Showing 0 jurisdictions in NATO — Global Median: 145 per 100k"
     );
 });
 
@@ -1002,9 +1002,7 @@ test("Phase 3 & Validation — Palettes, Lesotho enclave outline, and representa
 
     // Verify exact 5-step color ramps for Default and Accessibility Presets
     assert.deepEqual(Array.from(context.PALETTES.default.colors), ["#FEE6D9", "#FCA289", "#F55B4B", "#C51B7D", "#67001F"]);
-    assert.deepEqual(Array.from(context.PALETTES.protanomaly.colors), ["#F0F0F0", "#E69F00", "#D55E00", "#CC79A7", "#004949"]);
-    assert.deepEqual(Array.from(context.PALETTES.deuteranomaly.colors), ["#56B4E9", "#F0E442", "#E69F00", "#D55E00", "#111111"]);
-    assert.deepEqual(Array.from(context.PALETTES.tritanomaly.colors), ["#FFFFFF", "#E5323B", "#B50D5F", "#4B0082", "#2E4052"]);
+    assert.deepEqual(Array.from(context.PALETTES.colorblind.colors), ["#FEE838", "#BCAF6F", "#7C7B78", "#35456C", "#00224E"]);
 
     // Verify switching palettes updates fills without breaking No Data hatching or selection outlines
     const countryPaths = document.querySelectorAll("path.country");
@@ -1013,7 +1011,7 @@ test("Phase 3 & Validation — Palettes, Lesotho enclave outline, and representa
     lsoPath.dispatchEvent("click");
     assert.equal(context.appState.pinnedJurisdictionId, "LSO");
 
-    for (const presetKey of ["default", "protanomaly", "deuteranomaly", "tritanomaly"]) {
+    for (const presetKey of ["default", "colorblind"]) {
         context.appState.palette = presetKey;
         context.applyPaletteThemeVariables();
         context.renderSteppedLegend();
@@ -1033,4 +1031,3 @@ test("Phase 3 & Validation — Palettes, Lesotho enclave outline, and representa
         assert.equal(focusOutlines[0].getAttribute("data-iso"), "LSO");
     }
 });
-

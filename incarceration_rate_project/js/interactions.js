@@ -353,17 +353,13 @@ const renderDetailsPanel = (feature, row, isTransientHover = false) => {
 
     const rankIndex = appState.rankedData.findIndex(item => item.iso === row.iso);
     const rankText = rankIndex >= 0 ? `#${rankIndex + 1} of ${appState.rankedData.length}` : "N/A";
-    const regionalPeers = appState.data.filter(
-        item => Number.isFinite(item.rate) && regionForJurisdiction(item) === regionName
-    );
-    const regionalAverage = regionalPeers.length ? d3.mean(regionalPeers, item => item.rate) : GLOBAL_MEDIAN_RATE;
-    const globalMedian = computeMedianRate(appState.rankedData) || GLOBAL_MEDIAN_RATE;
+    const globalMedian = appState.globalMedianRate || GLOBAL_MEDIAN_RATE;
 
     const ratioToMedian = row.rate >= globalMedian
         ? `${(row.rate / Math.max(globalMedian, 1)).toFixed(1)}× the global median (${Math.round(globalMedian)})`
         : `${(globalMedian / Math.max(row.rate, 1)).toFixed(1)}× below the global median (${Math.round(globalMedian)})`;
     const comparisonClass = row.rate >= globalMedian ? "comparison" : "comparison below";
-    const benchmarkMax = Math.max(row.rate, globalMedian, regionalAverage, US_BENCHMARK_RATE, 1);
+    const benchmarkMax = Math.max(row.rate, globalMedian, US_BENCHMARK_RATE, 1);
 
     panel.html(`
         <div class="panel-header-row">
@@ -378,15 +374,14 @@ const renderDetailsPanel = (feature, row, isTransientHover = false) => {
         <span class="${comparisonClass}">${escapeHtml(ratioToMedian)}</span>
         <dl class="stat-list">
             <div class="stat-row"><dt>Global rank</dt><dd>${escapeHtml(rankText)}</dd></div>
-            <div class="stat-row"><dt>${escapeHtml(regionName)} mean</dt><dd>${d3.format(",.0f")(regionalAverage)} per 100k</dd></div>
+            <div class="stat-row"><dt>Global Median</dt><dd>${d3.format(",.0f")(globalMedian)} per 100k</dd></div>
             <div class="stat-row"><dt>Jurisdiction type</dt><dd>${escapeHtml(jurisdictionCategory)}</dd></div>
             <div class="stat-row"><dt>Geopolitical blocs</dt><dd>${escapeHtml(blocsList)}</dd></div>
         </dl>
         <div class="benchmark">
             <h3>Benchmark comparison (per 100k)</h3>
             ${renderBenchmarkBarHtml(row.country, row.rate, benchmarkMax, true)}
-            ${renderBenchmarkBarHtml(`${regionName} avg`, regionalAverage, benchmarkMax, false)}
-            ${renderBenchmarkBarHtml("World median", globalMedian, benchmarkMax, false)}
+            ${renderBenchmarkBarHtml("Global Median", globalMedian, benchmarkMax, false)}
             ${renderBenchmarkBarHtml("United States", US_BENCHMARK_RATE, benchmarkMax, false)}
         </div>
     `);
@@ -528,6 +523,11 @@ const syncFilterControlsUI = () => {
 
     d3.select("#chart-scroll-region")
         .classed("is-scrollable", appState.chartViewLimit === "all");
+    d3.select("#show-no-data-control")
+        .style("display", appState.chartViewLimit === "all" ? null : "none");
+    d3.select("#show-no-data")
+        .property("checked", Boolean(appState.showNoData))
+        .property("disabled", appState.chartViewLimit !== "all");
 
     const titleEl = typeof document !== "undefined" ? document.getElementById("explorer-heading-title") : null;
     if (titleEl) {
@@ -550,6 +550,7 @@ const resetAllFilters = () => {
     appState.jurisdictionTypeFilter = "all";
     appState.rateRangeFilter = "all";
     appState.sortOrder = "highest";
+    appState.showNoData = false;
     appState.selectedBucket = null;
     appState.hoveredBucket = null;
     appState.searchQuery = "";
@@ -611,8 +612,9 @@ const setupControls = () => {
         .attr("aria-pressed", continent => continent === appState.activeContinentFilter ? "true" : "false")
         .text(continent => continent)
         .on("click", (event, continent) => {
-            activeContinentFilter = continent;
-            appState.activeContinentFilter = continent;
+            const nextContinent = continent === appState.activeContinentFilter ? "All" : continent;
+            activeContinentFilter = nextContinent;
+            appState.activeContinentFilter = nextContinent;
             syncFilterControlsUI();
             updateMapStyles();
             renderBarChart();
@@ -664,8 +666,11 @@ const setupControls = () => {
 
     // Unified Filter Toolbar controls
     d3.select("#filter-continent").on("change", event => {
-        activeContinentFilter = event.target.value;
-        appState.activeContinentFilter = event.target.value;
+        const nextContinent = event.target.value === appState.activeContinentFilter
+            ? "All"
+            : event.target.value;
+        activeContinentFilter = nextContinent;
+        appState.activeContinentFilter = nextContinent;
         syncFilterControlsUI();
         updateMapStyles();
         renderBarChart();
@@ -691,6 +696,12 @@ const setupControls = () => {
         renderBarChart();
     });
 
+    d3.select("#show-no-data").on("change", event => {
+        appState.showNoData = appState.chartViewLimit === "all" && event.target.checked;
+        renderBarChart();
+        syncFilterControlsUI();
+    });
+
     d3.select("#reset-filter").on("click", resetAllFilters);
     d3.select("#empty-state-reset").on("click", resetAllFilters);
 
@@ -698,6 +709,7 @@ const setupControls = () => {
     d3.select("#view-top-15").on("click", () => {
         if (appState.chartViewLimit === "top15") return;
         appState.chartViewLimit = "top15";
+        appState.showNoData = false;
         const scrollRegion = typeof document !== "undefined" ? document.getElementById("chart-scroll-region") : null;
         if (scrollRegion) scrollRegion.scrollTop = 0;
         syncFilterControlsUI();
@@ -780,10 +792,48 @@ const chooseSearchSuggestion = row => {
     d3.select("#country-search").property("value", row.country);
     appState.searchQuery = "";
     d3.select("#search-suggestions").classed("visible", false).html("");
+
+    activeContinentFilter = "All";
+    appState.activeContinentFilter = "All";
+    appState.activeBloc = "all";
+    appState.jurisdictionTypeFilter = "all";
+    appState.rateRangeFilter = "all";
+    appState.sortOrder = "highest";
+    appState.selectedBucket = null;
+    appState.hoveredBucket = null;
+    appState.chartViewLimit = "all";
+    syncFilterControlsUI();
+
     handleJurisdictionSelect(row, feature, true, row.iso);
     updateMapStyles();
     renderBarChart();
     updateResetFiltersState();
+    scrollToChartEntity(row.iso);
+};
+
+const scrollToChartEntity = iso => {
+    const scrollRegion = document.getElementById("chart-scroll-region");
+    if (!scrollRegion || !appState.barChartSvg) return;
+
+    const group = appState.barChartSvg.selectAll("g.chart-bar-group")
+        .filter(d => d.iso === iso)
+        .node();
+    if (!group) return;
+
+    const transform = group.getAttribute("transform") || "";
+    const match = transform.match(/translate\([^,]+,\s*([^)]+)\)/);
+    const rowTop = match ? Number(match[1]) : 0;
+    const targetTop = Math.max(0, rowTop - (scrollRegion.clientHeight - group.getBoundingClientRect().height) / 2);
+
+    if (typeof scrollRegion.scrollTo === "function") {
+        try {
+            scrollRegion.scrollTo({ top: targetTop, behavior: "smooth" });
+            return;
+        } catch (_) {
+            // Older browsers may reject the options object.
+        }
+    }
+    scrollRegion.scrollTop = targetTop;
 };
 
 const handleSearchKeydown = event => {
@@ -805,6 +855,33 @@ const handleSearchKeydown = event => {
     }
 };
 
+const renderChartAnnotation = () => {
+    const container = d3.select("#chart-annotation");
+    if (container.empty()) return;
+    const paletteObj = PALETTES[appState.palette] || PALETTES.default;
+    const tierItems = RATE_BUCKETS
+        .filter(bucket => bucket.colorIndex !== null)
+        .map(bucket => `
+            <span class="chart-annotation-section">
+                <span class="chart-annotation-swatch" style="background:${paletteObj.colors[bucket.colorIndex]}" aria-hidden="true"></span>
+                <span>${escapeHtml(bucket.label)}</span>
+            </span>
+        `)
+        .join("");
+
+    container.html(`
+        <span class="chart-annotation-section">
+            <span class="chart-annotation-title">Bar colors = rate tier</span>
+            ${tierItems}
+        </span>
+        <span class="chart-annotation-section">
+            <span class="chart-annotation-title">Entity type</span>
+            <span class="chart-annotation-square" aria-hidden="true"></span>
+            <span>Overseas / Autonomous Territory</span>
+        </span>
+    `);
+};
+
 /**
  * Render and animate the responsive D3/SVG Horizontal Bar Chart (#jurisdiction-bar-chart).
  * Bound by canonical ISO code (d => d.iso). Excludes No Data records from rankings.
@@ -818,8 +895,7 @@ const renderBarChart = (animate = true) => {
         ? allFilteredRows.slice(0, 15)
         : allFilteredRows;
 
-    // Update telemetry in the required contract:
-    // "Showing X jurisdictions in [Bloc] — Median Rate: Y per 100k"
+    // Update telemetry with the single global benchmark.
     const telemetryText = formatSummaryTelemetry(
         allFilteredRows,
         appState.activeBloc,
@@ -869,6 +945,7 @@ const renderBarChart = (animate = true) => {
                 .attr("role", "region")
                 .attr("aria-label", "Horizontal bar chart of incarceration rates per 100,000 population");
             s.append("g").attr("class", "chart-grid-group");
+            s.append("g").attr("class", "chart-major-grid-group");
             s.append("g").attr("class", "chart-axis-top");
             s.append("g").attr("class", "chart-bars-layer");
             s.append("g").attr("class", "chart-axis-bottom");
@@ -889,6 +966,17 @@ const renderBarChart = (animate = true) => {
     const topAxis = d3.axisTop(rateScale).ticks(tickCount).tickSizeOuter(0).tickFormat(d3.format(","));
     const bottomAxis = d3.axisBottom(rateScale).ticks(tickCount).tickSizeOuter(0).tickFormat(d3.format(","));
     const gridLines = d3.axisTop(rateScale).ticks(tickCount).tickSize(-plotHeight).tickFormat("");
+    const majorTickValues = [];
+    for (let tick = 200; tick <= Math.floor(domainMax / 200) * 200; tick += 200) {
+        majorTickValues.push(tick);
+    }
+    const majorGridLines = d3.axisTop(rateScale);
+    if (typeof majorGridLines.tickValues === "function") {
+        majorGridLines
+            .tickValues(majorTickValues)
+            .tickSize(-plotHeight)
+            .tickFormat("");
+    }
 
     svg.select(".chart-grid-group")
         .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`)
@@ -897,6 +985,19 @@ const renderBarChart = (animate = true) => {
         .selection()
         .select(".domain")
         .remove();
+
+    if (typeof majorGridLines.tickValues === "function") {
+        svg.select(".chart-major-grid-group")
+            .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`)
+            .transition(t)
+            .call(majorGridLines)
+            .selection()
+            .select(".domain")
+            .remove();
+        svg.select(".chart-major-grid-group").selectAll("line").classed("major-gridline", true);
+    }
+
+    renderChartAnnotation();
 
     svg.select(".chart-axis-top")
         .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`)
@@ -960,10 +1061,18 @@ const renderBarChart = (animate = true) => {
 
                 g.append("text")
                     .attr("class", "chart-y-label")
-                    .attr("x", -10)
+                    .attr("x", -18)
                     .attr("y", rowHeight / 2)
                     .attr("dy", "0.35em")
                     .attr("text-anchor", "end");
+
+                g.append("rect")
+                    .attr("class", "chart-label-marker territory")
+                    .attr("x", -14)
+                    .attr("y", rowHeight / 2 - 4)
+                    .attr("width", 8)
+                    .attr("height", 8)
+                    .style("display", "none");
 
                 g.append("text")
                     .attr("class", "chart-value-label")
@@ -984,11 +1093,11 @@ const renderBarChart = (animate = true) => {
         .attr("data-iso", d => d.iso)
         .attr("aria-label", (d, i) => {
             const cat = getJurisdictionCategoryLabel(d);
-            return `Rank ${i + 1}: ${d.country} (${d.iso}, ${cat}), ${d3.format(",")(d.rate)} prisoners per 100,000`;
+            const rateLabel = Number.isFinite(d.rate)
+                ? `${d3.format(",")(d.rate)} prisoners per 100,000`
+                : "No data";
+            return `Rank ${i + 1}: ${d.country} (${d.iso}, ${cat}), ${rateLabel}`;
         })
-        .on("mouseenter", (event, d) => handleJurisdictionHover(event, d, null, d.iso))
-        .on("mousemove", event => moveFloatingTooltip(event))
-        .on("mouseleave", () => handleJurisdictionLeave())
         .on("focus", (event, d) => handleJurisdictionHover(event, d, null, d.iso))
         .on("blur", () => handleJurisdictionLeave())
         .on("click", (event, d) => {
@@ -1012,10 +1121,17 @@ const renderBarChart = (animate = true) => {
     barGroups.select(".chart-y-label")
         .text((d, i) => {
             const prefix = `${i + 1}. `;
-            // Only overseas_autonomous territories display the square marker indicator ▪
-            const suffix = d.jurisdiction_type === "overseas_autonomous" ? " ▪" : "";
-            return `${prefix}${truncateLabel(d.country)}${suffix}`;
+            const maxTextChars = d.jurisdiction_type === "overseas_autonomous"
+                ? Math.max(10, maxLabelChars - 2)
+                : maxLabelChars;
+            const visibleName = d.country.length > maxTextChars
+                ? `${d.country.slice(0, maxTextChars - 1)}…`
+                : d.country;
+            return `${prefix}${visibleName}`;
         });
+
+    barGroups.select(".chart-label-marker")
+        .style("display", d => d.jurisdiction_type === "overseas_autonomous" ? null : "none");
 
     barGroups.transition(t)
         .style("opacity", 1)
@@ -1023,13 +1139,14 @@ const renderBarChart = (animate = true) => {
 
     barGroups.select(".chart-bar-rect")
         .attr("fill", d => getBarFill(d))
+        .classed("no-data-bar", d => !Number.isFinite(d.rate))
         .transition(t)
-        .attr("width", d => Math.max(3, rateScale(d.rate)));
+        .attr("width", d => Number.isFinite(d.rate) ? Math.max(3, rateScale(d.rate)) : 0);
 
     barGroups.select(".chart-value-label")
-        .text(d => d3.format(",")(d.rate))
+        .text(d => Number.isFinite(d.rate) ? d3.format(",")(d.rate) : "No data")
         .transition(t)
-        .attr("x", d => Math.max(3, rateScale(d.rate)) + 7)
+        .attr("x", d => Number.isFinite(d.rate) ? Math.max(3, rateScale(d.rate)) + 7 : 7)
         .attr("text-anchor", "start");
 
     updateBarChartHighlightStates();

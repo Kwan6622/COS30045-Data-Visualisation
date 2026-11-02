@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added MultiPolygon disaggregation rules so French Guiana's South American polygon resolves to `GUF` (not `FRA`) and Svalbard resolves to `SJM` (not `NOR`).
 - **Geopolitical & Historical Blocs Filter (`NATO`, `Post-Soviet States`, `Former Yugoslavia`, `OECD`, `ASEAN`, `All / Reset`)**:
   - Added synchronized bloc filter controls in both the top control bar and the lower unified filter toolbar.
-  - Dimming non-member map jurisdictions to `opacity: 0.15` while filtering the horizontal bar chart and updating summary telemetry (`Showing X jurisdictions in [Bloc] — Median Rate: Y per 100k`).
+  - Dimming non-member map jurisdictions to `opacity: 0.15` while filtering the horizontal bar chart and showing the dataset-wide `Global Median`.
 - **Taxonomy-Driven Marker Geometry & Dedicated SVG Focus Layer (`<g id="focus-layer">`)**:
   - Rendered `"sovereign"` and `"constituent"` records (including Scotland and Northern Ireland) as `<circle class="sovereign-marker">` and `"overseas_autonomous"` records as `<rect class="territory-marker">` centered on primary land centroids (including Greenland, French Guiana, Puerto Rico, and New Caledonia).
   - Added `<g id="focus-layer">` above `.countries-layer` with `1.1px` `non-scaling-stroke` outlines so enclaves and bordered nations (such as Mongolia and Lesotho) are never partially occluded by neighboring polygons.
@@ -39,4 +39,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - Baseline D3.js v7 world choropleth map (`d3.geoNaturalEarth1`) displaying prison population rates per 100,000 people.
 - Stepped gold palette, basic hover tooltips, and static summary tables.
-

@@ -48,10 +48,8 @@
             <label class="select-control palette-control" for="palette-select">
                 <span class="control-label">Palette</span>
                 <select id="palette-select" aria-label="Colour-vision accessibility palette">
-                    <option value="default">Default (Orange–Red–Purple)</option>
-                    <option value="protanomaly">Protanomaly (Red-Weak)</option>
-                    <option value="deuteranomaly">Deuteranomaly (Green-Weak)</option>
-                    <option value="tritanomaly">Tritanomaly (Blue-Weak)</option>
+                    <option value="default">Default Palette</option>
+                    <option value="colorblind">Colorblind Mode</option>
                 </select>
             </label>
         </section>
@@ -62,13 +60,20 @@
                 <span>Hover to preview · Click a rate tier to filter</span>
             </div>
             <div id="legend" class="stepped-legend" role="group" aria-label="Incarceration rate tiers per 100,000"></div>
+            <p class="accessibility-note">Colorblind Mode is optimized primarily for protan and deutan vision deficiencies. Tritan vision may perceive some hues differently, but the monotonic lightness progression preserves the data ordering.</p>
+        </section>
+
+        <section class="entity-legend" aria-label="Jurisdiction type legend">
+            <span class="entity-legend-title">Jurisdiction type</span>
+            <span class="entity-legend-item"><span class="entity-marker entity-marker-circle" aria-hidden="true"></span> Sovereign / Constituent</span>
+            <span class="entity-legend-item"><span class="entity-marker entity-marker-square" aria-hidden="true"></span> Overseas / Autonomous Territory</span>
         </section>
 
         <section class="visualisation-layout">
             <div class="map-card">
                 <div id="map" class="map-container"></div>
                 <div class="map-caption">
-                    <span><strong>Explore:</strong> Hover to inspect · Click to pin sidebar &amp; zoom (1×–16×) · <strong>●</strong> Sovereign / Constituent · <strong>▪</strong> Overseas / Autonomous Territory</span>
+                    <span><strong>Explore:</strong> Hover to inspect · Click to pin sidebar &amp; zoom (1×–16×)</span>
                     <div class="map-actions">
                         <button id="reset-map" class="text-button" type="button">Reset view</button>
                     </div>
@@ -145,8 +150,15 @@
                             </select>
                         </label>
 
+                        <label id="show-no-data-control" class="toolbar-field checkbox-field" for="show-no-data">
+                            <input id="show-no-data" type="checkbox">
+                            <span class="toolbar-label">Show N/A data</span>
+                        </label>
+
                         <button id="reset-filter" class="button button-outline reset-filter-btn" type="button" disabled>Reset Filters</button>
                     </div>
+
+                    <div id="chart-annotation" class="chart-annotation-panel" aria-label="Bar chart color and entity type explanation"></div>
 
                     <div id="chart-scroll-region" class="chart-scroll-region">
                         <div id="jurisdiction-bar-chart" class="bar-chart-container"></div>
@@ -168,7 +180,7 @@
                 <p class="eyebrow">About this data</p>
                 <h2>A rate, not a headcount</h2>
             </div>
-            <p>Rates express the number of people held in prison per 100,000 of the general population. Sovereign nations and constituent administrations (such as Scotland and Northern Ireland) use circular markers (<strong>●</strong>), whereas overseas and autonomous territories use square markers (<strong>▪</strong>) and disaggregate from parent states.</p>
+            <p>Rates express the number of people held in prison per 100,000 of the general population. Sovereign nations and constituent administrations (such as Scotland and Northern Ireland) use circular markers, whereas overseas and autonomous territories use square markers and disaggregate from parent states.</p>
             <p class="source-note">Source: <a href="https://www.prisonstudies.org/world-prison-data/highest-lowest/highest-lowest-prison-population-rate" target="_blank" rel="noopener noreferrer">Institute for Crime &amp; Justice Policy Research (ICPR), World Prison Brief</a>.</p>
         </section>
     </main>

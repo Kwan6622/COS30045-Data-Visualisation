@@ -62,7 +62,7 @@ Every record in the enriched dataset is assigned strictly one `jurisdiction_type
      - **Kingdom of Denmark**: `GRL`, `FRO`
      - **China SARs**: `HKG`, `MAC`
      - **Associated States & External Territories**: `COK`, `NIU`, `TKL`, `NFK`, `CXR`, `CCK`, `ALA`, `SJM`, `ESH`
-   - Rendered on the map using square markers (`<rect class="territory-marker">`) centered on the primary land centroid (including large territories such as Greenland, French Guiana, Puerto Rico, and New Caledonia) and denoted with `▪` in the horizontal bar chart.
+   - Rendered on the map using square markers (`<rect class="territory-marker">`) centered on the primary land centroid (including large territories such as Greenland, French Guiana, Puerto Rico, and New Caledonia) and denoted with a matching SVG square in the horizontal bar chart.
 
 ---
 
@@ -72,7 +72,7 @@ Thirty-two jurisdictions in `data/prison_pop_rate.csv` (such as `North Korea (PR
 
 - **Cartographic Retention**: `No Data` jurisdictions remain in `appState.data` and remain interactive on the map so landmass geometry is never dropped.
 - **Visual Encoding**: Both polygons and markers with `rate === null` are filled with `url(#pattern-no-data)`—a diagonal SVG hatch pattern over `#E2E8F0` in light mode and `#2D3748` in dark mode.
-- **Statistical Exclusion**: `No Data` records (`!Number.isFinite(record.rate)`) are strictly excluded from ordinal rankings (`appState.rankedData`), the horizontal bar chart (`getFilteredJurisdictions()`), and all median/mean telemetry (`computeMedianRate()`).
+- **Statistical Exclusion**: `No Data` records (`!Number.isFinite(record.rate)`) are strictly excluded from ordinal rankings (`appState.rankedData`), the horizontal bar chart (`getFilteredJurisdictions()`), and the dataset-wide `Global Median` (`computeMedianRate()`).
 
 ---
 
@@ -87,4 +87,3 @@ Each jurisdiction record includes a `blocs: string[]` array populated from `bloc
 - **ASEAN (10 members)**: `BRN`, `KHM`, `IDN`, `LAO`, `MYS`, `MMR`, `PHL`, `SGP`, `THA`, `VNM`
 
 To add a new bloc (such as `EU` or `Mercosur`), add its key and array of canonical ISO-3 codes to `blocMemberships` in `data/jurisdiction_mapping.json` and `BLOC_OPTIONS` in `js/shared-constants.js`.
-

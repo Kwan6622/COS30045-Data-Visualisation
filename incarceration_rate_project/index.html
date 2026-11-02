@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Global incarceration rates per 100,000 people">
+    <title>Global Incarceration Rates | World Prison Brief</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/visualisation.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="wordmark" href="index.html">WORLD PRISON BRIEF <span>/ DATA</span></a>
+            <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle dark mode">◐ <span>Dark mode</span></button>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        <section class="intro">
+            <p class="eyebrow">Global snapshot · Prison population</p>
+            <h1>Global <button class="glossary-trigger" type="button" data-glossary="incarceration">incarceration</button> rates per 100,000 population</h1>
+            <p class="dek">How many people are held in prison in each <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdiction</button>. Rates are comparable indicators, but reporting years and definitions vary by country.</p>
+        </section>
+
+        <section class="control-bar" aria-label="Map controls">
+            <label class="search-control">
+                <span class="sr-only">Search for a country</span>
+                <span aria-hidden="true">⌕</span>
+                <input id="country-search" type="search" placeholder="Search countries" autocomplete="off">
+                <div id="search-suggestions" class="search-suggestions" role="listbox"></div>
+            </label>
+            <div id="continent-filters" class="chip-group" aria-label="Filter by region"></div>
+            <label class="select-control">
+                <span class="sr-only">Select colour scheme</span>
+                <select id="palette-select">
+                    <option value="pew">Pew gold</option>
+                    <option value="crimson">Crimson</option>
+                    <option value="viridis">Viridis</option>
+                </select>
+            </label>
+            <button id="export-csv" class="button button-outline" type="button">Export CSV</button>
+        </section>
+
+        <section class="legend-section" aria-label="Map legend">
+            <div class="legend-heading">
+                <span>Prison population rate</span>
+                <span>per 100,000 people</span>
+            </div>
+            <div id="legend" class="stepped-legend"></div>
+        </section>
+
+        <section class="visualisation-layout">
+            <div class="map-card">
+                <div id="map" class="map-container"></div>
+                <div class="map-caption">
+                    <span><strong>Explore:</strong> Hover for details · Click a country to focus</span>
+                    <div class="map-actions">
+                        <button id="toggle-callouts" class="text-button" type="button" aria-pressed="true">◉ Hide callouts</button>
+                        <button id="reset-map" class="text-button" type="button">Reset view</button>
+                    </div>
+                </div>
+                <section class="leaderboard-module" aria-label="Top 15 incarceration rates">
+                    <div class="leaderboard-header">
+                        <div>
+                            <p class="eyebrow">Ranked view</p>
+                            <h2>Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button></h2>
+                        </div>
+                        <div class="leaderboard-heading-actions">
+                            <p id="leaderboard-summary" class="leaderboard-summary"></p>
+                            <button id="reset-filter" class="button button-outline" type="button" disabled>Reset filter</button>
+                        </div>
+                    </div>
+                    <div class="leaderboard-controls">
+                        <div id="leaderboard-continents" class="chip-group" aria-label="Leaderboard region"></div>
+                        <button id="sort-rate" class="filter-toggle" type="button">Highest rate ↓</button>
+                        <label class="territory-toggle"><input id="include-territories" type="checkbox" checked> Include dependent territories</label>
+                        <label class="select-control rate-select">
+                            <span class="sr-only">Rate range</span>
+                            <select id="rate-range">
+                                <option value="all">All rates</option>
+                                <option value="500">Above 500</option>
+                                <option value="300-500">300–500</option>
+                                <option value="0-99">Below 100</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div id="leaderboard" class="leaderboard-list"></div>
+                </section>
+            </div>
+            <aside id="details-panel" class="details-panel" aria-live="polite">
+                <div class="panel-empty">
+                    <span class="panel-mark">+</span>
+                    <h2>Select a country</h2>
+                    <p>Hover over the map or search for a jurisdiction to see its rate, ranking and regional context.</p>
+                </div>
+            </aside>
+        </section>
+
+        <section class="methodology">
+            <div>
+                <p class="eyebrow">About this data</p>
+                <h2>A rate, not a headcount</h2>
+            </div>
+            <p>Rates express the number of people held in prison per 100,000 of the general population. The source dataset does not include total prison populations or historical observations, so those fields are intentionally not estimated here.</p>
+            <p class="source-note">Source: <a href="https://www.prisonstudies.org/world-prison-data/highest-lowest/highest-lowest-prison-population-rate" target="_blank" rel="noopener noreferrer">Institute for Crime &amp; Justice Policy Research, World Prison Brief</a>.</p>
+        </section>
+    </main>
+
+    <div id="glossary-overlay" class="glossary-overlay" hidden>
+        <div class="glossary-dialog" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
+            <button id="glossary-close" class="glossary-close" type="button" aria-label="Close definition">×</button>
+            <p class="eyebrow">Plain-language definition</p>
+            <h2 id="glossary-title"></h2>
+            <p id="glossary-definition"></p>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>© Nguyen Duy Quang · COS30045 Data Visualisation</span>
+            <span>World Prison Brief / Data demonstration</span>
+        </div>
+    </footer>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+    <script src="js/load-data.js?v=3"></script>
+    <script src="js/map.js?v=3"></script>
+</body>
+</html>

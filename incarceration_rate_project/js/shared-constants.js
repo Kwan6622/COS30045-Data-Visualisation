@@ -36,13 +36,14 @@ const RATE_BUCKETS = [
 const PALETTES = {
     default: {
         name: "Default Palette",
-        colors: ["#FEE6D9", "#FCA289", "#F55B4B", "#C51B7D", "#67001F"],
-        textDarkUntilStep: 2,
-        accent: "#C51B7D",
-        accentDark: "#FCA289",
-        barDefault: "#C51B7D",
-        barHover: "#67001F",
-        barSelected: "#67001F"
+        // 0-99 (lightest) -> 500+ (darkest)
+        colors: ["#f8c3ab", "#fcaa8d", "#FB6A4A", "#DE2D26", "#A50F15"],
+        textDarkUntilStep: 2, // Steps 0, 1, 2 use dark text; 3, 4 use light text
+        accent: "#DE2D26",
+        accentDark: "#FCAE91",
+        barDefault: "#DE2D26",
+        barHover: "#A50F15",
+        barSelected: "#A50F15"
     },
     colorblind: {
         name: "Colorblind Mode",

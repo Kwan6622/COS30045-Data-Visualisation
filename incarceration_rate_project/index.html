@@ -80,10 +80,17 @@
                 </div>
 
                 <section class="leaderboard-module" aria-labelledby="explorer-heading-title">
+                    <div class="leaderboard-chart-toggle">
+                        <div id="chart-type-toggle" class="segmented-control" role="group" aria-label="Chart type">
+                            <button id="view-bar-chart" class="segment-btn active" type="button" aria-pressed="true">Bar Chart</button>
+                            <button id="view-pie-chart" class="segment-btn" type="button" aria-pressed="false">Pie Chart</button>
+                        </div>
+                    </div>
                     <div class="leaderboard-header">
                         <div>
-                            <p class="eyebrow">Ranked bar-chart explorer</p>
+                            <p id="explorer-eyebrow" class="eyebrow">Ranked bar-chart explorer</p>
                             <h2 id="explorer-heading-title">Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button></h2>
+                            <p id="chart-subtitle" class="chart-subtitle">Rates show prisoners per 100,000 people; the bar chart ranks incarceration rates.</p>
                         </div>
                         <div class="leaderboard-heading-actions">
                             <p id="leaderboard-summary" class="leaderboard-summary" aria-live="polite"></p>
@@ -109,7 +116,7 @@
                                 </select>
                             </label>
 
-                            <label class="toolbar-field" for="filter-bloc">
+                            <label id="toolbar-bloc-field" class="toolbar-field" for="filter-bloc">
                                 <span class="toolbar-label">Geopolitical &amp; Historical Blocs</span>
                                 <select id="filter-bloc">
                                     <option value="all">All / Reset</option>
@@ -138,7 +145,7 @@
                                 </select>
                             </label>
 
-                            <label class="toolbar-field" for="filter-rate-range">
+                            <label id="toolbar-rate-field" class="toolbar-field" for="filter-rate-range">
                                 <span class="toolbar-label">Rate range</span>
                                 <select id="filter-rate-range">
                                     <option value="all">All</option>
@@ -149,7 +156,7 @@
                                 </select>
                             </label>
 
-                            <label class="toolbar-field" for="filter-sort">
+                            <label id="toolbar-sort-field" class="toolbar-field" for="filter-sort">
                                 <span class="toolbar-label">Sort</span>
                                 <select id="filter-sort">
                                     <option value="highest">Highest Rate</option>
@@ -166,6 +173,9 @@
 
                     <div id="chart-scroll-region" class="chart-scroll-region">
                         <div id="jurisdiction-bar-chart" class="bar-chart-container"></div>
+                        <div id="pie-chart-notes" class="pie-chart-notes" hidden></div>
+                        <button id="pie-table-toggle" class="button button-outline pie-table-toggle" type="button" hidden aria-expanded="false">View as table</button>
+                        <div id="pie-data-table" class="pie-data-table" hidden></div>
                         <div id="chart-empty-state" class="chart-empty-state" hidden>
                             <p class="empty-state-title">No jurisdictions match the active filters.</p>
                             <p class="empty-state-subtitle">Try broadening the bloc, rate range, continent, or jurisdiction type filter.</p>

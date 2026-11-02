@@ -43,7 +43,8 @@ const PALETTES = {
         accentDark: "#FCAE91",
         barDefault: "#DE2D26",
         barHover: "#A50F15",
-        barSelected: "#A50F15"
+        barSelected: "#A50F15",
+        categorical: ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9"]
     },
     colorblind: {
         name: "Colorblind Mode",
@@ -53,7 +54,8 @@ const PALETTES = {
         accentDark: "#BCAF6F",
         barDefault: "#35456C",
         barHover: "#00224E",
-        barSelected: "#00224E"
+        barSelected: "#00224E",
+        categorical: ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9"]
     }
 };
 
@@ -67,6 +69,8 @@ const BLOC_OPTIONS = [
     { key: "OECD", label: "OECD" },
     { key: "ASEAN", label: "ASEAN" }
 ];
+
+const BLOC_PRIORITY = ["NATO", "OECD", "ASEAN", "Post-Soviet States", "Former Yugoslavia"];
 
 const RATE_RANGE_OPTIONS = [
     { key: "all", label: "All" },
@@ -484,7 +488,11 @@ const appState = {
     territoryGroup: null,
     labelGroup: null,
     svg: null,
-    barChartSvg: null
+    barChartSvg: null,
+    pieChartSvg: null,
+    chartView: "bar",
+    pieSelectedKey: null,
+    pieTableVisible: false
 };
 
 /**
@@ -499,6 +507,12 @@ const parsePrisonRate = rawValue => {
     const trimmed = String(rawValue).trim();
     if (!trimmed || trimmed.toUpperCase() === "N/A") return null;
     const parsed = Number(trimmed);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const parseIncarceratedPopulation = rawValue => {
+    if (rawValue === undefined || rawValue === null) return null;
+    const parsed = Number(String(rawValue).replace(/,/g, "").trim());
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 };
 
@@ -558,12 +572,16 @@ const getBlocsForIso = (iso, mappingConfig = appState.mappingConfig) => {
 
 /**
  * Enrich a raw CSV row into the canonical jurisdiction schema:
- * { iso, country, rate, continent, jurisdiction_type, blocs }
+ * { iso, country, rate, incarceratedPopulation, continent, jurisdiction_type, blocs }
  */
 const enrichJurisdictionRecord = (rawRow, mappingConfig = appState.mappingConfig) => {
     const country = String(rawRow.country ?? rawRow.Country ?? "").trim();
     const rawRate = rawRow.rate !== undefined ? rawRow.rate : rawRow["Prison population rate"];
     const rate = parsePrisonRate(rawRate);
+    const rawPopulation = rawRow.incarceratedPopulation !== undefined
+        ? rawRow.incarceratedPopulation
+        : rawRow["Prison population total"];
+    const incarceratedPopulation = parseIncarceratedPopulation(rawPopulation);
     const continent = String(rawRow.continent ?? rawRow.Continent ?? "").trim();
     const iso = rawRow.iso || resolveCountryIso(country, mappingConfig);
     const jurisdiction_type = classifyJurisdictionType(iso, mappingConfig);
@@ -573,6 +591,7 @@ const enrichJurisdictionRecord = (rawRow, mappingConfig = appState.mappingConfig
         iso,
         country,
         rate,
+        incarceratedPopulation,
         continent,
         jurisdiction_type,
         blocs
@@ -804,7 +823,8 @@ const doesRowMatchActiveFilters = (row, featureName = "", options = {}) => {
         || effectiveRegion === appState.activeContinentFilter
         || (row && row.continent === appState.activeContinentFilter);
 
-    const blocMatch = !appState.activeBloc
+    const blocMatch = options.ignoreBlocFilter
+        || !appState.activeBloc
         || appState.activeBloc === "all"
         || Boolean(row && Array.isArray(row.blocs) && row.blocs.includes(appState.activeBloc));
 
@@ -936,12 +956,14 @@ if (typeof module !== "undefined" && module.exports) {
         PALETTES,
         CONTINENT_OPTIONS,
         BLOC_OPTIONS,
+        BLOC_PRIORITY,
         RATE_RANGE_OPTIONS,
         JURISDICTION_TYPE_OPTIONS,
         SORT_OPTIONS,
         DEFAULT_MAPPING_CONFIG,
         appState,
         parsePrisonRate,
+        parseIncarceratedPopulation,
         normaliseJurisdictionName,
         resolveCountryIso,
         classifyJurisdictionType,

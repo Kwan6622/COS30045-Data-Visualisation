@@ -1000,7 +1000,7 @@ test("Phase 3 & Validation — Palettes, Lesotho enclave outline, and representa
     context.drawMap(rawRows, mappingJson, sampleFeatures);
 
     // Verify exact 5-step color ramps for Default and Accessibility Presets
-    assert.deepEqual(Array.from(context.PALETTES.default.colors), ["#FEE6D9", "#FCA289", "#F55B4B", "#C51B7D", "#67001F"]);
+    assert.deepEqual(Array.from(context.PALETTES.default.colors), ["#f8c3ab", "#fcaa8d", "#FB6A4A", "#DE2D26", "#A50F15"]);
     assert.deepEqual(Array.from(context.PALETTES.colorblind.colors), ["#FEE838", "#BCAF6F", "#7C7B78", "#35456C", "#00224E"]);
 
     // Verify switching palettes updates fills without breaking No Data hatching or selection outlines

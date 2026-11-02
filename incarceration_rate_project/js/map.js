@@ -381,7 +381,6 @@ const syncElementsWithZoom = transform => {
     appState.currentZoomTransform = transform || { k: 1, x: 0, y: 0 };
     const k = appState.currentZoomTransform.k || 1;
     const inverseSqrt = 1 / Math.pow(k, 0.65);
-
     if (appState.territoryGroup) {
         const circleRadius = Math.max(1.2, 3.2 * inverseSqrt);
         const squareSide = Math.max(2.4, 6.2 * inverseSqrt);
@@ -731,13 +730,15 @@ const renderMapGeography = rawAtlasFeatures => {
                 .attr("y", -side / 2)
                 .attr("width", side)
                 .attr("height", side)
-                .attr("stroke-width", 1.0);
+                .attr("stroke", "#000000")
+                .attr("stroke-width", 1);
         } else {
             group.append("circle")
                 .attr("class", "sovereign-marker")
                 .attr("data-iso", d.properties.iso)
                 .attr("r", 3.2)
-                .attr("stroke-width", 1.0);
+                .attr("stroke", "#000000")
+                .attr("stroke-width", 1);
         }
     });
 

@@ -386,8 +386,8 @@ const renderDetailsPanel = (feature, row, isTransientHover = false) => {
             <h3>Benchmark comparison (per 100k)</h3>
             ${renderBenchmarkBarHtml(row.country, row.rate, benchmarkMax, true)}
             ${continentMedian !== null
-                ? renderBenchmarkBarHtml(`${continentLabel} Median`, continentMedian, benchmarkMax, false)
-                : ""}
+            ? renderBenchmarkBarHtml(`${continentLabel} Median`, continentMedian, benchmarkMax, false)
+            : ""}
             ${renderBenchmarkBarHtml("Global Median", globalMedian, benchmarkMax, false)}
             ${renderBenchmarkBarHtml("United States", US_BENCHMARK_RATE, benchmarkMax, false)}
         </div>
@@ -528,16 +528,30 @@ const syncFilterControlsUI = () => {
     d3.select("#view-show-all")
         .classed("active", appState.chartViewLimit === "all")
         .attr("aria-pressed", appState.chartViewLimit === "all" ? "true" : "false");
+    d3.select("#view-bar-chart")
+        .classed("active", appState.chartView === "bar")
+        .attr("aria-pressed", appState.chartView === "bar" ? "true" : "false");
+    d3.select("#view-pie-chart")
+        .classed("active", appState.chartView === "pie")
+        .attr("aria-pressed", appState.chartView === "pie" ? "true" : "false");
 
+    const isPieView = appState.chartView === "pie";
+    d3.select(".filter-toolbar").classed("is-pie-view", isPieView);
     d3.select("#chart-view-toggle")
-        .style("display", appState.showNoData ? "none" : null);
+        .style("display", appState.showNoData || isPieView ? "none" : null);
     d3.select("#chart-scroll-region")
-        .classed("is-scrollable", appState.chartViewLimit === "all");
+        .classed("is-scrollable", appState.chartViewLimit === "all" && !isPieView);
     d3.select("#show-no-data-control")
-        .style("display", appState.chartViewLimit === "all" ? null : "none");
+        .style("display", appState.chartViewLimit === "all" && !isPieView ? null : "none");
     d3.select("#show-no-data")
         .property("checked", Boolean(appState.showNoData))
         .property("disabled", appState.chartViewLimit !== "all");
+    d3.select("#toolbar-bloc-field")
+        .style("display", isPieView ? "none" : null);
+    d3.select("#toolbar-rate-field")
+        .style("display", isPieView ? "none" : null);
+    d3.select("#toolbar-sort-field")
+        .style("display", isPieView ? "none" : null);
     d3.select("#filter-rate-range")
         .property("disabled", Boolean(appState.showNoData))
         .classed("is-disabled", Boolean(appState.showNoData));
@@ -547,13 +561,22 @@ const syncFilterControlsUI = () => {
 
     const titleEl = typeof document !== "undefined" ? document.getElementById("explorer-heading-title") : null;
     if (titleEl) {
-        titleEl.innerHTML = appState.showNoData
-            ? `Jurisdictions with no data`
-            : appState.chartViewLimit === "top15"
-            ? `Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`
-            : `All matching <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`;
+        titleEl.innerHTML = appState.chartView === "pie"
+            ? "Incarcerated population by geopolitical bloc"
+            : appState.showNoData
+                ? `Jurisdictions with no data`
+                : appState.chartViewLimit === "top15"
+                    ? `Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`
+                    : `All matching <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`;
         setupGlossaryTooltips();
     }
+    d3.select("#explorer-eyebrow").text(appState.chartView === "pie" ? "Population by bloc" : "Ranked bar-chart explorer");
+    d3.select("#chart-subtitle").text(appState.chartView === "pie"
+        ? "Absolute prisoner counts, not incarceration rates per 100,000."
+        : "Rates show prisoners per 100,000 people; the bar chart ranks incarceration rates.");
+    d3.select("#pie-chart-notes").attr("hidden", appState.chartView === "pie" ? null : true);
+    d3.select("#pie-table-toggle").attr("hidden", appState.chartView === "pie" ? null : true);
+    d3.select("#pie-data-table").attr("hidden", appState.chartView === "pie" && appState.pieTableVisible ? null : true);
 
     updateResetFiltersState();
 };
@@ -572,6 +595,7 @@ const resetAllFilters = () => {
     appState.selectedBucket = null;
     appState.hoveredBucket = null;
     appState.searchQuery = "";
+    appState.pieSelectedKey = null;
 
     d3.select("#country-search").property("value", "");
     d3.select("#search-suggestions").classed("visible", false).html("");
@@ -588,6 +612,7 @@ const resetAllFilters = () => {
 const applyBlocFilter = blocKey => {
     const normalized = !blocKey || blocKey === "all" || blocKey === "All / Reset" ? "all" : blocKey;
     appState.activeBloc = normalized;
+    appState.pieSelectedKey = null;
     syncFilterControlsUI();
     updateMapStyles();
     renderBarChart();
@@ -611,7 +636,7 @@ const setupControls = () => {
         const isDark = document.body.classList.contains("dark-mode");
         try {
             sessionStorage.setItem("wpb_dark_mode", String(isDark));
-        } catch (_) {}
+        } catch (_) { }
         updateThemeButtonText();
         applyPaletteThemeVariables();
         defineMapPatterns(appState.svg);
@@ -672,7 +697,7 @@ const setupControls = () => {
             }
             try {
                 sessionStorage.setItem("wpb_palette", appState.palette);
-            } catch (_) {}
+            } catch (_) { }
             applyPaletteThemeVariables();
             renderSteppedLegend();
             updateMapStyles();
@@ -740,6 +765,30 @@ const setupControls = () => {
         appState.chartViewLimit = "all";
         syncFilterControlsUI();
         renderBarChart();
+    });
+
+    d3.select("#view-bar-chart").on("click", () => {
+        if (appState.chartView === "bar") return;
+        appState.chartView = "bar";
+        syncFilterControlsUI();
+        renderBarChart();
+    });
+
+    d3.select("#view-pie-chart").on("click", () => {
+        if (appState.chartView === "pie") return;
+        appState.chartView = "pie";
+        appState.showNoData = false;
+        syncFilterControlsUI();
+        renderPieChart();
+    });
+
+    d3.select("#pie-table-toggle").on("click", event => {
+        const table = d3.select("#pie-data-table");
+        const expanded = table.attr("hidden") === null;
+        appState.pieTableVisible = !expanded;
+        table.attr("hidden", expanded ? true : null);
+        d3.select(event.currentTarget).attr("aria-expanded", expanded ? "false" : "true")
+            .text(expanded ? "View as table" : "Hide table");
     });
 
     // Responsive resize observer for the horizontal bar chart
@@ -958,9 +1007,471 @@ const renderNoDataList = () => {
     updateResetFiltersState();
 };
 
+const getGeopoliticalPopulationData = () => {
+    const filteredRows = appState.data.filter(row => doesRowMatchActiveFilters(
+        row,
+        row?.country,
+        { ignoreShowNoData: true, ignoreRateFilters: true, ignoreBlocFilter: true }
+    ).matchesAll);
+    const uniqueRows = new Map();
+    filteredRows.forEach(row => {
+        if (row?.iso && !uniqueRows.has(row.iso)) uniqueRows.set(row.iso, row);
+    });
+
+    const rows = Array.from(uniqueRows.values());
+    const validRows = rows.filter(row => Number.isFinite(row.incarceratedPopulation) && row.incarceratedPopulation >= 0);
+    const globalTotal = validRows.reduce((sum, row) => sum + row.incarceratedPopulation, 0);
+    const missingCount = rows.length - validRows.length;
+    if (!(globalTotal > 0)) {
+        return { globalTotal: 0, missingCount, filteredCount: rows.length, slices: [] };
+    }
+
+    const configuredGroups = BLOC_OPTIONS
+        .filter(group => group.key !== "all")
+        .sort((a, b) => BLOC_PRIORITY.indexOf(a.key) - BLOC_PRIORITY.indexOf(b.key));
+    const totals = new Map(configuredGroups.map(group => [group.key, { value: 0, count: 0 }]));
+    let representedTotal = 0;
+
+    validRows.forEach(row => {
+        const membership = BLOC_PRIORITY.find(groupKey => (
+            Array.isArray(row.blocs) && row.blocs.includes(groupKey)
+        ));
+        if (membership && totals.has(membership)) {
+            const groupTotal = totals.get(membership);
+            groupTotal.value += row.incarceratedPopulation;
+            groupTotal.count += 1;
+            representedTotal += row.incarceratedPopulation;
+        }
+    });
+
+    const slices = configuredGroups
+        .map(group => ({
+            key: group.key,
+            label: group.label,
+            value: totals.get(group.key).value,
+            count: totals.get(group.key).count
+        }))
+        .filter(slice => slice.value > 0)
+        .sort((a, b) => b.value - a.value);
+    const otherValue = Math.max(0, globalTotal - representedTotal);
+    const otherCount = validRows.filter(row => !BLOC_PRIORITY.some(groupKey => (
+        Array.isArray(row.blocs) && row.blocs.includes(groupKey)
+    ))).length;
+    if (otherValue > 0) {
+        slices.push({
+            key: "other",
+            label: "Other / Rest of the World",
+            value: otherValue,
+            count: otherCount
+        });
+    }
+
+    const sliceTotal = slices.reduce((sum, slice) => sum + slice.value, 0);
+    if (Math.abs(sliceTotal - globalTotal) > 0.000001) {
+        console.error("Pie chart aggregation does not reconcile to its denominator.", {
+            globalTotal,
+            sliceTotal
+        });
+    }
+
+    return {
+        globalTotal,
+        missingCount,
+        filteredCount: rows.length,
+        slices: slices.map(slice => ({
+            ...slice,
+            percentage: (slice.value / globalTotal) * 100
+        }))
+    };
+};
+
+const pieColor = (slice, index) => {
+    if (slice.key === "other") return "#64748B";
+    const palette = PALETTES[appState.palette] || PALETTES.default;
+    return palette.categorical[index % palette.categorical.length];
+};
+
+const formatPopulationShort = value => {
+    if (value >= 1000000) return `${d3.format(".2f")(value / 1000000)}M`;
+    if (value >= 1000) return `${d3.format(".1f")(value / 1000)}k`;
+    return d3.format(",")(value);
+};
+
+const positionPieLabels = (nodes, height, width, radius) => {
+    const minimumGap = height < 430 ? 38 : 40;
+    const topLimit = -(height / 2 - 30);
+    const bottomLimit = height / 2 - 16;
+    const maxOffset = Math.max(radius + 20, width / 2 - 142);
+    ["left", "right"].forEach(side => {
+        const sideNodes = nodes
+            .filter(node => node.side === side)
+            .sort((a, b) => a.targetY - b.targetY || a.index - b.index);
+        if (!sideNodes.length) return;
+        sideNodes.forEach((node, index) => {
+            node.y = index === 0
+                ? Math.max(topLimit, node.targetY)
+                : Math.max(node.targetY, sideNodes[index - 1].y + minimumGap);
+        });
+        const lastIndex = sideNodes.length - 1;
+        if (sideNodes[lastIndex].y > bottomLimit) {
+            sideNodes[lastIndex].y = bottomLimit;
+            for (let index = lastIndex - 1; index >= 0; index -= 1) {
+                sideNodes[index].y = Math.min(sideNodes[index].y, sideNodes[index + 1].y - minimumGap);
+            }
+            sideNodes[0].y = Math.max(topLimit, sideNodes[0].y);
+            for (let index = 1; index <= lastIndex; index += 1) {
+                sideNodes[index].y = Math.max(sideNodes[index].y, sideNodes[index - 1].y + minimumGap);
+            }
+        }
+        sideNodes.forEach((node, index) => {
+            const nextNode = sideNodes[index + 1];
+            const needsRadialStep = Boolean(
+                nextNode
+                && node.y > radius * 0.45
+                && (nextNode.y - node.y) <= minimumGap + 6
+            );
+            const radialExtra = needsRadialStep ? 14 : 0;
+            const labelDist = Math.min(radius + 18 + radialExtra, maxOffset);
+            const elbowDist = Math.min(radius + 8 + radialExtra, labelDist - 8);
+            node.x = side === "right" ? labelDist : -labelDist;
+            node.elbowX = side === "right" ? elbowDist : -elbowDist;
+        });
+    });
+};
+
+const getActivePieFilterScope = () => {
+    const parts = [];
+    if (appState.activeContinentFilter && appState.activeContinentFilter !== "All") {
+        parts.push(appState.activeContinentFilter);
+    }
+    if (appState.jurisdictionTypeFilter && appState.jurisdictionTypeFilter !== "all") {
+        const typeLabels = {
+            sovereign: "Sovereign Nations",
+            constituent: "Constituent",
+            overseas_autonomous: "Overseas Territories"
+        };
+        parts.push(typeLabels[appState.jurisdictionTypeFilter] || appState.jurisdictionTypeFilter);
+    }
+    if (appState.searchQuery) {
+        parts.push(`"${appState.searchQuery}"`);
+    }
+    return parts.length ? parts.join(" · ") : "Global total";
+};
+
+const renderPieChart = (animate = true) => {
+    const containerNode = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
+    if (!containerNode || !appState.data.length) return;
+
+    const { globalTotal, missingCount, filteredCount, slices } = getGeopoliticalPopulationData();
+    d3.select(containerNode).selectAll(".no-data-list").remove();
+    d3.select(containerNode).selectAll("svg.bar-chart-svg").style("display", "none");
+    d3.select("#chart-annotation").style("display", "none");
+    d3.select("#chart-empty-state").attr("hidden", true);
+    const emptyStateEl = document.getElementById("chart-empty-state");
+    if (emptyStateEl) emptyStateEl.hidden = true;
+    const filtersActive = appState.activeContinentFilter !== "All"
+        || appState.jurisdictionTypeFilter !== "all"
+        || Boolean(appState.searchQuery);
+    d3.select("#leaderboard-summary").text(
+        `${filtersActive ? `Total (${getActivePieFilterScope()})` : "Global incarcerated population"}: ${d3.format(",")(globalTotal)}`
+    );
+    d3.select("#explorer-eyebrow").text("Population by bloc");
+    d3.select("#chart-subtitle").text("Absolute prisoner counts, not incarceration rates per 100,000.");
+    d3.select("#pie-chart-notes")
+        .attr("hidden", null)
+        .html(`Source: <a href="https://www.prisonstudies.org/world-prison-data/highest-lowest/highest-lowest-prison-population-total" target="_blank" rel="noopener noreferrer">World Prison Brief population totals</a> · Reference year: 2026. Prisoner definitions differ between countries. ${missingCount} of ${filteredCount} jurisdictions without valid counts are excluded.<br><strong>Jurisdictions belonging to several blocs are counted once, using priority: <br>NATO &gt; OECD &gt; ASEAN &gt; Post-Soviet States &gt; Former Yugoslavia.</strong>`);
+    d3.select("#pie-table-toggle").attr("hidden", null);
+    renderPieDataTable(slices);
+
+    const width = Math.max(containerNode.clientWidth || 720, 320);
+    const height = width < 520 ? 470 : 430;
+    const radius = Math.min((width - 210) / 2, height * 0.33);
+    const centerX = width / 2;
+    const centerY = height / 2 - 8;
+    const svg = d3.select(containerNode)
+        .selectAll("svg.pie-chart-svg")
+        .data([null])
+        .join(enter => {
+            const next = enter.append("svg")
+                .attr("class", "pie-chart-svg")
+                .attr("role", "img")
+                .attr("aria-label", "Donut chart showing absolute incarcerated population by geopolitical bloc");
+            next.append("g").attr("class", "pie-chart-main");
+            next.append("g").attr("class", "pie-leaders");
+            next.append("g").attr("class", "pie-labels");
+            next.append("g").attr("class", "pie-center");
+            return next;
+        })
+        .style("display", null)
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("width", width)
+        .attr("height", height);
+    d3.select(containerNode).selectAll("svg.bar-chart-svg").style("display", "none");
+    svg.style("display", "block");
+    appState.pieChartSvg = svg;
+    svg.selectAll(".pie-empty-message").remove();
+
+    const main = svg.select(".pie-chart-main").attr("transform", `translate(${centerX}, ${centerY})`);
+    const leaders = svg.select(".pie-leaders").attr("transform", `translate(${centerX}, ${centerY})`);
+    const labels = svg.select(".pie-labels").attr("transform", `translate(${centerX}, ${centerY})`);
+    const center = svg.select(".pie-center").attr("transform", `translate(${centerX}, ${centerY})`);
+    const pie = d3.pie().sort(null).startAngle(0).endAngle(Math.PI * 2).value(slice => slice.value);
+    const pieData = pie(slices);
+    const arc = d3.arc()
+        .innerRadius(radius * 0.57)
+        .outerRadius(radius)
+        .padAngle(pieData.length > 1 ? 0.008 : 0)
+        .padRadius(radius);
+    const outerRimArc = d3.arc().innerRadius(radius * 1.01).outerRadius(radius * 1.01);
+    const labelArc = d3.arc().innerRadius(radius * 1.12).outerRadius(radius * 1.12);
+    main.selectAll("path.pie-empty-ring")
+        .data(slices.length ? [] : [{ startAngle: 0, endAngle: Math.PI * 2 }])
+        .join("path")
+        .attr("class", "pie-empty-ring")
+        .attr("fill", "var(--line)")
+        .attr("opacity", 0.45)
+        .attr("d", arc);
+    const minSliceAngle = 0.036;
+    if (pieData.length > 1) {
+        let extraAngle = 0;
+        let largestIndex = 0;
+        pieData.forEach((d, idx) => {
+            if (d.endAngle - d.startAngle > pieData[largestIndex].endAngle - pieData[largestIndex].startAngle) {
+                largestIndex = idx;
+            }
+        });
+        const spans = pieData.map((d, idx) => {
+            const raw = d.endAngle - d.startAngle;
+            if (idx !== largestIndex && raw > 0 && raw < minSliceAngle) {
+                extraAngle += minSliceAngle - raw;
+                return minSliceAngle;
+            }
+            return raw;
+        });
+        if (extraAngle > 0 && spans[largestIndex] - extraAngle > minSliceAngle) {
+            spans[largestIndex] -= extraAngle;
+            let cursor = 0;
+            pieData.forEach((d, idx) => {
+                d.startAngle = cursor;
+                cursor += spans[idx];
+                d.endAngle = cursor;
+            });
+        }
+    }
+    const labelNodes = pieData.map((slice, index) => {
+        const anchorSlice = pieData.length === 1
+            ? { ...slice, startAngle: 0, endAngle: Math.PI }
+            : slice;
+        const point = labelArc.centroid(anchorSlice);
+        return {
+            slice,
+            anchorSlice,
+            index,
+            side: Math.cos((anchorSlice.startAngle + anchorSlice.endAngle) / 2 - Math.PI / 2) >= 0 ? "right" : "left",
+            targetY: point[1]
+        };
+    });
+    positionPieLabels(labelNodes, height, width, radius);
+    const duration = animate ? 300 : 0;
+    const reducedMotion = typeof window !== "undefined"
+        && window.matchMedia
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const transitionDuration = reducedMotion ? 0 : Math.min(duration, 180);
+    const transition = svg.transition().duration(transitionDuration).ease(d3.easeCubicOut);
+    const showSliceTooltip = (event, sliceData) => {
+        const tooltip = getOrCreateFloatingTooltip();
+        tooltip.innerHTML = `<div class="tooltip-title">${escapeHtml(sliceData.label)}</div><div class="tooltip-rate"><strong>${d3.format(",")(sliceData.value)}</strong> incarcerated people</div><div class="tooltip-meta">${sliceData.percentage.toFixed(1)}% of total · ${sliceData.count} jurisdictions</div>`;
+        tooltip.hidden = false;
+        moveFloatingTooltip(event);
+    };
+    const toggleSliceSelection = key => {
+        appState.pieSelectedKey = appState.pieSelectedKey === key ? null : key;
+        updatePieSelection();
+    };
+    const updatePieSelection = () => {
+        const selectedKey = appState.pieSelectedKey;
+        slicesSelection
+            .classed("is-selected", d => d.data.key === selectedKey)
+            .classed("is-dimmed", d => Boolean(selectedKey) && d.data.key !== selectedKey)
+            .attr("aria-pressed", d => d.data.key === selectedKey ? "true" : "false")
+            .attr("transform", d => {
+                if (d.data.key !== selectedKey || pieData.length <= 1) return null;
+                const point = arc.centroid(d);
+                const length = Math.hypot(point[0], point[1]) || 1;
+                return `translate(${point[0] * 7 / length},${point[1] * 7 / length})`;
+            });
+        slicesSelection.transition().duration(transitionDuration).ease(d3.easeCubicOut)
+            .style("opacity", d => selectedKey && d.data.key !== selectedKey ? 0.33 : 1)
+            .attr("d", arc);
+        labels.selectAll("text.pie-label")
+            .classed("is-selected", node => node.slice.data.key === selectedKey)
+            .classed("is-dimmed", node => Boolean(selectedKey) && node.slice.data.key !== selectedKey);
+        leaders.selectAll("polyline.pie-leader-line")
+            .classed("is-selected", node => node.slice.data.key === selectedKey)
+            .classed("is-dimmed", node => Boolean(selectedKey) && node.slice.data.key !== selectedKey);
+        renderPieCenter(center, selectedKey ? slices.find(slice => slice.key === selectedKey) : null, globalTotal);
+        renderPieDataTable(slices, toggleSliceSelection);
+    };
+
+    const slicesSelection = main.selectAll("path.pie-slice")
+        .data(pieData, d => d.data.key)
+        .join(
+            enter => enter.append("path")
+                .attr("class", "pie-slice")
+                .attr("tabindex", "0")
+                .attr("role", "button")
+                .attr("d", arc)
+                .style("opacity", 0)
+                .on("mouseenter focus", (event, d) => {
+                    d3.select(event.currentTarget).classed("is-active", true);
+                    showSliceTooltip(event, d.data);
+                })
+                .on("mousemove", moveFloatingTooltip)
+                .on("mouseleave blur", event => {
+                    d3.select(event.currentTarget).classed("is-active", false);
+                    hideFloatingTooltip();
+                })
+                .on("click keydown", (event, d) => {
+                    if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+                    event.preventDefault();
+                    toggleSliceSelection(d.data.key);
+                }),
+            update => update,
+            exit => exit.transition(transition).style("opacity", 0).remove()
+        )
+        .attr("fill", (d, index) => pieColor(d.data, index))
+        .classed("is-selected", d => d.data.key === appState.pieSelectedKey)
+        .attr("aria-pressed", d => d.data.key === appState.pieSelectedKey ? "true" : "false")
+        .attr("aria-label", d => `${d.data.label}: ${d3.format(",")(d.data.value)} incarcerated people, ${d.data.percentage.toFixed(1)}% of total`);
+
+    leaders.selectAll("polyline")
+        .data(labelNodes, d => d.slice.data.key)
+        .join("polyline")
+        .attr("class", "pie-leader-line")
+        .attr("points", node => {
+            const start = outerRimArc.centroid(node.anchorSlice || node.slice);
+            return `${start[0]},${start[1]} ${node.elbowX},${node.y} ${node.x},${node.y}`;
+        })
+        .on("click", (event, node) => {
+            event.stopPropagation();
+            toggleSliceSelection(node.slice.data.key);
+        });
+    labels.selectAll("text")
+        .data(labelNodes, d => d.slice.data.key)
+        .join("text")
+        .attr("class", "pie-label")
+        .attr("x", node => node.x)
+        .attr("y", node => node.y - 7)
+        .attr("text-anchor", node => node.side === "right" ? "start" : "end")
+        .on("mouseenter", (event, node) => {
+            slicesSelection.filter(d => d.data.key === node.slice.data.key).classed("is-active", true);
+            showSliceTooltip(event, node.slice.data);
+        })
+        .on("mousemove", moveFloatingTooltip)
+        .on("mouseleave", (_event, node) => {
+            slicesSelection.filter(d => d.data.key === node.slice.data.key).classed("is-active", false);
+            hideFloatingTooltip();
+        })
+        .on("click", (event, node) => {
+            event.stopPropagation();
+            toggleSliceSelection(node.slice.data.key);
+        })
+        .each(function (node) {
+            const text = d3.select(this);
+            text.selectAll("tspan").remove();
+            text.append("tspan").attr("x", node.x).text(node.slice.data.label);
+            text.append("tspan").attr("x", node.x).attr("dy", "14").text(`${node.slice.data.percentage.toFixed(1)}% (${formatPopulationShort(node.slice.data.value)})`);
+        });
+    svg.on("click", event => {
+        if (!event.target.closest("path.pie-slice, .pie-label, .pie-leader-line, .pie-center")) {
+            appState.pieSelectedKey = null;
+            updatePieSelection();
+        }
+    });
+    center.on("click", event => {
+        event.stopPropagation();
+        appState.pieSelectedKey = null;
+        updatePieSelection();
+    });
+    d3.select(document).on("keydown.pie-selection", event => {
+        if (event.key === "Escape" && appState.pieSelectedKey) {
+            appState.pieSelectedKey = null;
+            updatePieSelection();
+        }
+    });
+    updatePieSelection();
+};
+
+const renderPieCenter = (center, slice, total) => {
+    center.selectAll("*").remove();
+    if (slice) {
+        center.append("text").attr("class", "pie-center-label").attr("text-anchor", "middle").attr("y", -24)
+            .style("font-size", slice.label.length > 22 ? "8px" : null)
+            .text(slice.label);
+        center.append("text").attr("class", "pie-center-value").attr("text-anchor", "middle").attr("y", -2)
+            .text(d3.format(",")(slice.value));
+        center.append("text").attr("class", "pie-center-label").attr("text-anchor", "middle").attr("y", 16)
+            .text(`${slice.percentage.toFixed(1)}% of total`);
+        return;
+    }
+    const scopeLabel = getActivePieFilterScope();
+    center.append("text").attr("class", "pie-center-label").attr("text-anchor", "middle").attr("y", -24)
+        .style("font-size", scopeLabel.length > 22 ? "8px" : null)
+        .text(scopeLabel);
+    center.append("text").attr("class", "pie-center-value").attr("text-anchor", "middle").attr("y", -2)
+        .text(d3.format(",")(total));
+    center.append("text").attr("class", "pie-center-label").attr("text-anchor", "middle").attr("y", 16)
+        .text("incarcerated");
+};
+
+const renderPieDataTable = (slices, onSelectKey) => {
+    const table = d3.select("#pie-data-table");
+    if (table.empty()) return;
+    table.html(`
+    <table>
+        <caption style="
+        font-size: calc(1em + 2px);
+        font-weight: bold;
+        padding-bottom: 5px;
+        ">
+        Incarcerated population by geopolitical bloc
+        </caption>
+        <thead>
+        <tr>
+            <th scope="col">Bloc</th>
+            <th scope="col">Count</th>
+            <th scope="col">Share</th>
+        </tr>
+        </thead>
+        <tbody>
+        ${slices.map(slice => `
+            <tr data-slice-key="${escapeHtml(slice.key)}" class="${appState.pieSelectedKey === slice.key ? "is-selected" : ""}">
+            <th scope="row">${escapeHtml(slice.label)}</th>
+            <td>${d3.format(",")(slice.value)}</td>
+            <td>${slice.percentage.toFixed(1)}%</td>
+            </tr>
+        `).join("")}
+        </tbody>
+    </table>
+    `);
+    if (typeof onSelectKey === "function") {
+        table.selectAll("tbody tr[data-slice-key]").on("click", function () {
+            const key = this.getAttribute("data-slice-key");
+            if (key) onSelectKey(key);
+        });
+    }
+};
+
 const renderBarChart = (animate = true) => {
     const containerNode = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
     if (!containerNode || !appState.data.length) return;
+    appState.pieSelectedKey = null;
+    if (appState.chartView === "pie") {
+        renderPieChart(animate);
+        return;
+    }
+    d3.select(containerNode).selectAll("svg.pie-chart-svg").style("display", "none");
+    d3.select(containerNode).style("display", null);
 
     if (appState.showNoData) {
         renderNoDataList();
@@ -1271,6 +1782,8 @@ if (typeof module !== "undefined" && module.exports) {
         applyBlocFilter,
         setupControls,
         renderBarChart,
+        getGeopoliticalPopulationData,
+        renderPieChart,
         updateBarChartHighlightStates
     };
 }

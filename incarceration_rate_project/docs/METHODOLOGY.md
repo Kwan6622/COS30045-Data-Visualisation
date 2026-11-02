@@ -10,6 +10,12 @@ All incarceration rate figures in this project are sourced from the **World Pris
 
 ---
 
+### Absolute Population Aggregation
+
+The pie chart joins `data/prison_population_total.csv` to the rate dataset by normalized jurisdiction name and uses `Prison population total` as its sole measure. Its denominator sums each valid canonical jurisdiction (`iso`) once after the applicable continent, bloc, jurisdiction-type, and search filters; missing, negative, and non-numeric counts are excluded. Because geopolitical memberships overlap, each jurisdiction is assigned to the first matching displayed group in the explicit priority order. `Other / Rest of the World` is `max(0, filtered total - represented group total)`.
+
+The displayed priority is explicitly NATO > OECD > ASEAN > Post-Soviet States > Former Yugoslavia. Continent, jurisdiction type, search, and selected bloc filters apply to the pie denominator; rate-range and rate-tier filters do not, because the pie measures absolute counts.
+
 ## 2. Territory-Disaggregation Policy
 
 The World Prison Brief reports autonomous territories, crown dependencies, insular areas, and overseas departments separately from their administering sovereign states because they operate distinct judicial and correctional administrations with markedly different incarceration rates.

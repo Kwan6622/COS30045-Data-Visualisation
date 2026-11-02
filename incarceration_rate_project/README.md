@@ -1,6 +1,8 @@
-# Global Incarceration Rates — Interactive Choropleth & Bar-Chart Explorer
+# Global Incarceration Rates — Interactive Choropleth, Bar & Population Explorer
 
 An interactive vanilla HTML/CSS/JavaScript data visualization built with **D3.js v7** and **TopoJSON** that explores global incarceration rates per `100,000` people across sovereign nations, constituent administrations, and overseas territories.
+
+The explorer also provides a geopolitical population donut using absolute prisoner counts from `data/prison_population_total.csv`; it does not derive counts from rates.
 
 ---
 
@@ -22,13 +24,19 @@ This project visualizes prison population rates per `100,000` inhabitants compil
 - **Geopolitical & Historical Blocs & Unified Filter Toolbar**:
   - Filter by **Geopolitical & Historical Blocs** (`All / Reset`, `NATO`, `Post-Soviet States`, `Former Yugoslavia`, `OECD`, `ASEAN`) intersected with **Continent**, **Jurisdiction type**, **Rate range** (`< 100`, `100–300`, `300–600`, `600+`), and **Sort** (`Highest Rate`, `Lowest Rate`, `Alphabetical (A–Z)`).
   - Active filters dim non-matching map geometry to `opacity: 0.15`, filter the responsive D3 horizontal bar chart (`Show Top 15` / `Show All`), and show the dataset-wide `Global Median` benchmark (where `X` counts matched jurisdictions with finite numeric rates).
+  - **Dual Chart Modes (Bar vs Pie)**:
+    - In **Bar Chart** mode: Explore ranked rates per 100,000 across jurisdictions, with rate-tier swatches, scrollable list, top 15 toggle, and dedicated No Data review mode.
+    - In **Pie / Donut Chart** mode: Explores absolute incarcerated prisoner counts by geopolitical bloc (`NATO`, `OECD`, `ASEAN`, `Post-Soviet States`, `Former Yugoslavia`, `Other / Rest of the World`).
+    - The donut center dynamically displays the total sum of incarcerated persons for the active filter scope (e.g. `Global total`, `Africa`, `Europe`, `Sovereign Nations Only`) and updates immediately when changing continent or jurisdiction type filters.
+    - Slices, callout labels, leader lines, and table rows are fully interactive: clicking any slice pulls it out with a contrast outline, dims other slices, updates the center to the slice's individual count and share of total, and highlights the corresponding row in the accompanying data table.
+    - When viewing the Pie Chart, controls irrelevant to absolute population counts (Geopolitical Bloc filter, Rate Range, Sort, and Top 15 toggle) are automatically hidden to avoid confusing rate vs headcount metrics.
 - **Five-Step Choropleth Ramp, No Data Hatching & Color-Vision Accessibility Presets**:
-  - **Default (Orange–Red–Purple)**: `['#FEE6D9', '#FCA289', '#F55B4B', '#C51B7D', '#67001F']`
-  - **Protanomaly (Red-Weak)**: `['#F0F0F0', '#E69F00', '#D55E00', '#CC79A7', '#004949']`
-  - **Deuteranomaly (Green-Weak)**: `['#56B4E9', '#F0E442', '#E69F00', '#D55E00', '#111111']`
-  - **Tritanomaly (Blue-Weak)**: `['#FFFFFF', '#E5323B', '#B50D5F', '#4B0082', '#2E4052']`
+  - **Default (Sequential Warm Red/Orange)**: `['#f8c3ab', '#fcaa8d', '#FB6A4A', '#DE2D26', '#A50F15']`
+  - **Colorblind Mode (High-Contrast Viridis/Cividis Light-to-Dark)**: `['#FEE838', '#BCAF6F', '#7C7B78', '#35456C', '#00224E']`
   - **No Data (`N/A`)**: Rendered with a diagonal SVG hatch pattern (`#pattern-no-data`) over `#E2E8F0` in light mode and `#2D3748` in dark mode across both polygons and markers, and excluded from all numeric rankings and medians.
   - **Show N/A Data**: In `Show All`, switches the explorer to a filtered list containing only jurisdictions without numeric data; rate range and sort controls are disabled, and unchecking restores the numeric chart and prior filter values.
+- **High-Contrast Surface Hierarchy & Light/Dark Theme Support**:
+  - Designed with distinct card surfaces (`#FFFFFF` in light mode, `#131c2e` in dark mode) and borders (`1px solid #94A3B8`) on a tinted canvas (`#E4EBF5` in light mode, `#0b1120` in dark mode) ensuring every section (header, intro, controls, legend, map card, sidebar, methodology, footer) stands out clearly against the page background.
 
 ---
 
@@ -67,6 +75,7 @@ incarceration_rate_project/
 ```
 
 - **`data/prison_pop_rate.csv`**: Contains the 256 World Prison Brief jurisdiction rows (`Country`, `Prison population rate`, `Continent`).
+- **`data/prison_population_total.csv`**: Contains country-keyed absolute incarcerated-person counts (`Country / Jurisdiction`, `Prison population total`) used only by the geopolitical pie chart. Rows without a valid count are excluded from its global denominator.
 - **`data/jurisdiction_mapping.json`**: External mapping configuration that resolves CSV country names and Natural Earth feature IDs/names to canonical `iso` codes, defines the 3-tier `taxonomy` (`sovereign`, `constituent`, `overseas_autonomous`), configures `blocMemberships` (`NATO`, `Post-Soviet States`, `Former Yugoslavia`, `OECD`, `ASEAN`), defines `polygonDisaggregationRules` (`FRA` -> `GUF`, `NOR` -> `SJM`), and stores `markerCoordinatesByIso` and `labelAnchorByIso`.
 
 ---

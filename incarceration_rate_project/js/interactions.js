@@ -1,210 +1,1076 @@
-/**************************************************/
-/*                 Interactions                   */
-/* COS30045 Data Visualisation - Week 6, Ex 6.4   */
-/* Dufour & Meeks (2024) Chapter 7                */
-/**************************************************/
+/******************************************************************************/
+/* Global Incarceration Rates — State Synchronization, Filters & Bar Chart    */
+/******************************************************************************/
 
-/************************************/
-/*             Filters              */
-/************************************/
-const populateFilters = (data) => {
+/**
+ * Escape text safely before inserting into HTML templates.
+ */
+const escapeHtml = value => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
-    // Screen type filter (updates histogram AND scatterplot)
-    d3.select("#filters_screen")
-        .selectAll(".filter")
-        .data(filters_screen)
+/**
+ * Human-readable taxonomy label. Constituent jurisdictions (Scotland, Northern Ireland,
+ * England & Wales, Bosnia entities) are never described as overseas dependencies.
+ */
+const getJurisdictionCategoryLabel = row => {
+    if (!row) return "Jurisdiction";
+    switch (row.jurisdiction_type) {
+        case "overseas_autonomous":
+            return "Overseas / autonomous territory";
+        case "constituent":
+            return "Constituent jurisdiction";
+        case "sovereign":
+        default:
+            return "Sovereign state";
+    }
+};
+
+/**
+ * Sync CSS custom properties with the active palette and light/dark theme.
+ */
+const applyPaletteThemeVariables = () => {
+    if (typeof document === "undefined") return;
+    const paletteObj = PALETTES[appState.palette] || PALETTES.default;
+    const isDark = document.body.classList.contains("dark-mode");
+    const rootStyle = document.documentElement.style;
+    rootStyle.setProperty("--accent", isDark ? paletteObj.accentDark : paletteObj.accent);
+    rootStyle.setProperty("--bar", isDark ? paletteObj.accentDark : paletteObj.barDefault);
+    rootStyle.setProperty("--bar-hover", paletteObj.barHover);
+    rootStyle.setProperty("--bar-selected", paletteObj.barSelected);
+    rootStyle.setProperty("--no-data-base", isDark ? NO_DATA_COLORS.darkBase : NO_DATA_COLORS.lightBase);
+    rootStyle.setProperty("--no-data-stroke", isDark ? NO_DATA_COLORS.darkStroke : NO_DATA_COLORS.lightStroke);
+};
+
+/**
+ * Non-blocking hover/focus tooltip for glossary terms ("incarceration", "jurisdiction").
+ */
+const setupGlossaryTooltips = () => {
+    if (typeof document === "undefined") return;
+    let popover = document.getElementById("glossary-popover");
+    if (!popover) {
+        popover = document.createElement("div");
+        popover.id = "glossary-popover";
+        popover.className = "glossary-popover";
+        popover.setAttribute("role", "tooltip");
+        popover.hidden = true;
+        document.body.appendChild(popover);
+    }
+
+    const showGlossary = trigger => {
+        const key = trigger.dataset.glossary;
+        const entry = GLOSSARY_DEFINITIONS[key];
+        if (!entry) return;
+
+        popover.innerHTML = `<strong>${escapeHtml(entry.title)}</strong><span>${escapeHtml(entry.text)}</span>`;
+        popover.hidden = false;
+
+        const rect = trigger.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        const scrollX = window.scrollX || window.pageXOffset || 0;
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+
+        let left = rect.left + scrollX + rect.width / 2 - popRect.width / 2;
+        left = Math.max(12, Math.min((window.innerWidth || 1024) - popRect.width - 12, left));
+
+        let top = rect.bottom + scrollY + 8;
+        if (rect.bottom + popRect.height + 16 > (window.innerHeight || 768)) {
+            top = rect.top + scrollY - popRect.height - 8;
+        }
+
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+    };
+
+    const hideGlossary = () => {
+        popover.hidden = true;
+    };
+
+    document.querySelectorAll(".glossary-trigger").forEach(trigger => {
+        if (trigger.dataset.boundGlossary === "true") return;
+        trigger.dataset.boundGlossary = "true";
+        trigger.setAttribute("aria-describedby", "glossary-popover");
+        trigger.addEventListener("mouseenter", () => showGlossary(trigger));
+        trigger.addEventListener("mouseleave", hideGlossary);
+        trigger.addEventListener("focus", () => showGlossary(trigger));
+        trigger.addEventListener("blur", hideGlossary);
+        trigger.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                hideGlossary();
+                trigger.blur();
+            }
+        });
+    });
+};
+
+/**
+ * Shared floating tooltip for map polygons, markers, and bar chart rows.
+ */
+const getOrCreateFloatingTooltip = () => {
+    let tooltipEl = document.getElementById("shared-floating-tooltip");
+    if (!tooltipEl) {
+        tooltipEl = document.createElement("div");
+        tooltipEl.id = "shared-floating-tooltip";
+        tooltipEl.className = "map-tooltip";
+        tooltipEl.setAttribute("role", "tooltip");
+        tooltipEl.hidden = true;
+        document.body.appendChild(tooltipEl);
+    }
+    return tooltipEl;
+};
+
+const showFloatingTooltip = (event, row, feature) => {
+    if (typeof document === "undefined") return;
+    const tooltipEl = getOrCreateFloatingTooltip();
+    const displayName = row?.country || feature?.properties?.name || "Unknown jurisdiction";
+    const isoCode = row?.iso || resolveFeatureIso(feature, appState.mappingConfig) || "—";
+    const hasRate = row && Number.isFinite(row.rate);
+    const rankIndex = hasRate
+        ? appState.rankedData.findIndex(item => item.iso === row.iso)
+        : -1;
+    const rankLabel = rankIndex >= 0 ? `#${rankIndex + 1} of ${appState.rankedData.length}` : "Unranked";
+    const regionLabel = row ? regionForJurisdiction(row) : (feature?.properties?.name === "Antarctica" ? "Antarctica" : "—");
+    const categoryLabel = getJurisdictionCategoryLabel(row);
+
+    if (hasRate) {
+        tooltipEl.innerHTML = `
+            <div class="tooltip-title">${escapeHtml(displayName)} <span class="tooltip-iso">(${escapeHtml(isoCode)})</span></div>
+            <div class="tooltip-rate"><strong>${d3.format(",")(row.rate)}</strong> per 100,000</div>
+            <div class="tooltip-meta">Rank ${escapeHtml(rankLabel)} · ${escapeHtml(regionLabel)} · ${escapeHtml(categoryLabel)}</div>
+        `;
+    } else {
+        tooltipEl.innerHTML = `
+            <div class="tooltip-title">${escapeHtml(displayName)} <span class="tooltip-iso">(${escapeHtml(isoCode)})</span></div>
+            <div class="tooltip-rate">No data</div>
+            <div class="tooltip-meta">${escapeHtml(regionLabel)} · ${escapeHtml(categoryLabel)}</div>
+        `;
+    }
+
+    tooltipEl.hidden = false;
+    moveFloatingTooltip(event);
+};
+
+const moveFloatingTooltip = event => {
+    if (typeof document === "undefined") return;
+    const tooltipEl = document.getElementById("shared-floating-tooltip");
+    if (!tooltipEl || tooltipEl.hidden || !event) return;
+
+    const tipRect = tooltipEl.getBoundingClientRect();
+    const viewportW = window.innerWidth || 1024;
+    const scrollX = window.scrollX || window.pageXOffset || 0;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    let clientX = event.clientX;
+    let clientY = event.clientY;
+
+    if (!Number.isFinite(clientX) && event.target?.getBoundingClientRect) {
+        const targetRect = event.target.getBoundingClientRect();
+        clientX = targetRect.left + targetRect.width / 2;
+        clientY = targetRect.top;
+    }
+
+    if (!Number.isFinite(clientX)) return;
+
+    let left = clientX + scrollX + 14;
+    if (clientX + tipRect.width + 24 > viewportW) {
+        left = clientX + scrollX - tipRect.width - 14;
+    }
+    left = Math.max(scrollX + 8, left);
+
+    let top = clientY + scrollY - tipRect.height - 10;
+    if (clientY - tipRect.height - 14 < 0) {
+        top = clientY + scrollY + 18;
+    }
+
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+};
+
+const hideFloatingTooltip = () => {
+    if (typeof document === "undefined") return;
+    const tooltipEl = document.getElementById("shared-floating-tooltip");
+    if (tooltipEl) {
+        tooltipEl.hidden = true;
+    }
+};
+
+/**
+ * Resolve canonical { iso, row, feature } from any partial input.
+ */
+const resolveCanonicalEntity = (row, feature, explicitIso = null) => {
+    const iso = explicitIso
+        || row?.iso
+        || resolveFeatureIso(feature, appState.mappingConfig)
+        || (row?.country ? resolveCountryIso(row.country, appState.mappingConfig) : null);
+
+    const resolvedRow = (iso && appState.dataByIso.get(iso))
+        || row
+        || getRowForFeature(feature)
+        || null;
+
+    const resolvedFeature = feature
+        || (iso && appState.featuresByIso.get(iso))
+        || (iso && appState.markersByIso.get(iso))
+        || null;
+
+    return { iso, row: resolvedRow, feature: resolvedFeature };
+};
+
+/**
+ * Unified transient hover / focus handler.
+ * When a jurisdiction is pinned (appState.pinnedJurisdictionId !== null), hovering another
+ * jurisdiction updates ONLY the floating tooltip and hover highlights; it NEVER mutates sidebar data.
+ */
+const handleJurisdictionHover = (event, row, feature, explicitIso = null) => {
+    const entity = resolveCanonicalEntity(row, feature, explicitIso);
+    appState.hoveredJurisdictionId = entity.iso;
+    hoveredJurisdiction = entity;
+    appState.hoveredJurisdiction = entity;
+
+    updateMapStyles();
+    updateBarChartHighlightStates();
+    showFloatingTooltip(event, entity.row, entity.feature);
+
+    if (!appState.pinnedJurisdictionId) {
+        renderDetailsPanel(entity.feature, entity.row, true);
+    }
+};
+
+/**
+ * Unified pointer exit / blur handler.
+ * Clears transient hover state and tooltip without clearing the pinned selection.
+ */
+const handleJurisdictionLeave = () => {
+    appState.hoveredJurisdictionId = null;
+    hoveredJurisdiction = null;
+    appState.hoveredJurisdiction = null;
+
+    hideFloatingTooltip();
+    updateMapStyles();
+    updateBarChartHighlightStates();
+
+    if (!appState.pinnedJurisdictionId) {
+        renderDetailsPanel(null, null, false);
+    }
+};
+
+/**
+ * Unified persistent click / keyboard / search pinning handler.
+ * Pins the jurisdiction by canonical ISO and updates the sidebar, focus layer, and zoom.
+ */
+const handleJurisdictionSelect = (row, feature, shouldZoom = true, explicitIso = null) => {
+    const entity = resolveCanonicalEntity(row, feature, explicitIso);
+    if (!entity.iso && !entity.row && !entity.feature) return;
+
+    appState.pinnedJurisdictionId = entity.iso;
+    selectedJurisdiction = entity;
+    appState.selectedJurisdiction = entity;
+
+    updateMapStyles();
+    updateBarChartHighlightStates();
+    renderDetailsPanel(entity.feature, entity.row, false);
+    renderSelectedJurisdictionLabel(true);
+    announceSelectionToScreenReader(entity.row, entity.feature);
+
+    if (shouldZoom) {
+        zoomToJurisdiction(entity.row, entity.feature);
+    }
+};
+
+/**
+ * Announce pinned selection changes to screen readers via polite live region.
+ */
+const announceSelectionToScreenReader = (row, feature) => {
+    if (typeof document === "undefined") return;
+    const announcer = document.getElementById("selection-announcer");
+    if (!announcer) return;
+    const name = row?.country || feature?.properties?.name || "Jurisdiction";
+    const rateInfo = row && Number.isFinite(row.rate)
+        ? `incarceration rate ${d3.format(",")(row.rate)} per 100,000`
+        : "no incarceration rate data available";
+    announcer.textContent = `Pinned ${name}, ${rateInfo}.`;
+};
+
+/**
+ * Render the sidebar (#details-panel).
+ */
+const renderDetailsPanel = (feature, row, isTransientHover = false) => {
+    const panel = d3.select("#details-panel");
+    if (panel.empty()) return;
+
+    if (!row && !feature) {
+        panel.html(`
+            <div class="panel-empty">
+                <span class="panel-mark" aria-hidden="true">◎</span>
+                <h2>Select a jurisdiction</h2>
+                <p>Hover over any jurisdiction to preview its details, or click to pin the jurisdiction in this sidebar while continuing to explore the map.</p>
+            </div>
+        `);
+        return;
+    }
+
+    const displayName = row?.country || feature?.properties?.name || "Unknown";
+    const canonicalIso = row?.iso || resolveFeatureIso(feature, appState.mappingConfig) || "—";
+    const isPinned = Boolean(appState.pinnedJurisdictionId && appState.pinnedJurisdictionId === canonicalIso);
+
+    const kickerText = isPinned
+        ? "Pinned jurisdiction"
+        : (isTransientHover ? "Previewing jurisdiction" : "Selected jurisdiction");
+
+    const clearSelectionBtnHtml = isPinned
+        ? `<button type="button" id="clear-selection-btn" class="panel-clear-btn" aria-label="Clear pinned jurisdiction">Unpin ×</button>`
+        : "";
+
+    const regionName = row ? regionForJurisdiction(row) : (feature?.properties?.name === "Antarctica" ? "Antarctica" : "Unclassified");
+    const jurisdictionCategory = getJurisdictionCategoryLabel(row);
+    const blocsList = row && Array.isArray(row.blocs) && row.blocs.length > 0
+        ? row.blocs.join(", ")
+        : "None configured";
+
+    if (!row || !Number.isFinite(row.rate)) {
+        panel.html(`
+            <div class="panel-header-row">
+                <p class="panel-kicker">${escapeHtml(kickerText)}</p>
+                ${clearSelectionBtnHtml}
+            </div>
+            <p class="panel-continent">${escapeHtml(regionName)} · ${escapeHtml(jurisdictionCategory)}</p>
+            <h2 class="panel-title">${escapeHtml(displayName)}</h2>
+            <div class="panel-iso">Canonical ISO: <strong>${escapeHtml(canonicalIso)}</strong></div>
+            <p class="rate-number rate-missing">No data</p>
+            <p class="rate-unit">No prison population rate reported in World Prison Brief dataset</p>
+            <dl class="stat-list">
+                <div class="stat-row"><dt>Global rank</dt><dd>Excluded (No data)</dd></div>
+                <div class="stat-row"><dt>Jurisdiction type</dt><dd>${escapeHtml(jurisdictionCategory)}</dd></div>
+                <div class="stat-row"><dt>Geopolitical blocs</dt><dd>${escapeHtml(blocsList)}</dd></div>
+            </dl>
+        `);
+        panel.select("#clear-selection-btn").on("click", () => resetMapView());
+        return;
+    }
+
+    const rankIndex = appState.rankedData.findIndex(item => item.iso === row.iso);
+    const rankText = rankIndex >= 0 ? `#${rankIndex + 1} of ${appState.rankedData.length}` : "N/A";
+    const regionalPeers = appState.data.filter(
+        item => Number.isFinite(item.rate) && regionForJurisdiction(item) === regionName
+    );
+    const regionalAverage = regionalPeers.length ? d3.mean(regionalPeers, item => item.rate) : GLOBAL_MEDIAN_RATE;
+    const globalMedian = computeMedianRate(appState.rankedData) || GLOBAL_MEDIAN_RATE;
+
+    const ratioToMedian = row.rate >= globalMedian
+        ? `${(row.rate / Math.max(globalMedian, 1)).toFixed(1)}× the global median (${Math.round(globalMedian)})`
+        : `${(globalMedian / Math.max(row.rate, 1)).toFixed(1)}× below the global median (${Math.round(globalMedian)})`;
+    const comparisonClass = row.rate >= globalMedian ? "comparison" : "comparison below";
+    const benchmarkMax = Math.max(row.rate, globalMedian, regionalAverage, US_BENCHMARK_RATE, 1);
+
+    panel.html(`
+        <div class="panel-header-row">
+            <p class="panel-kicker">${escapeHtml(kickerText)}</p>
+            ${clearSelectionBtnHtml}
+        </div>
+        <p class="panel-continent">${escapeHtml(regionName)} · ${escapeHtml(jurisdictionCategory)}</p>
+        <h2 class="panel-title">${escapeHtml(row.country)}</h2>
+        <div class="panel-iso">Canonical ISO: <strong>${escapeHtml(canonicalIso)}</strong></div>
+        <p class="rate-number">${d3.format(",")(row.rate)}</p>
+        <p class="rate-unit">prisoners per 100,000 general population</p>
+        <span class="${comparisonClass}">${escapeHtml(ratioToMedian)}</span>
+        <dl class="stat-list">
+            <div class="stat-row"><dt>Global rank</dt><dd>${escapeHtml(rankText)}</dd></div>
+            <div class="stat-row"><dt>${escapeHtml(regionName)} mean</dt><dd>${d3.format(",.0f")(regionalAverage)} per 100k</dd></div>
+            <div class="stat-row"><dt>Jurisdiction type</dt><dd>${escapeHtml(jurisdictionCategory)}</dd></div>
+            <div class="stat-row"><dt>Geopolitical blocs</dt><dd>${escapeHtml(blocsList)}</dd></div>
+        </dl>
+        <div class="benchmark">
+            <h3>Benchmark comparison (per 100k)</h3>
+            ${renderBenchmarkBarHtml(row.country, row.rate, benchmarkMax, true)}
+            ${renderBenchmarkBarHtml(`${regionName} avg`, regionalAverage, benchmarkMax, false)}
+            ${renderBenchmarkBarHtml("World median", globalMedian, benchmarkMax, false)}
+            ${renderBenchmarkBarHtml("United States", US_BENCHMARK_RATE, benchmarkMax, false)}
+        </div>
+    `);
+
+    panel.select("#clear-selection-btn").on("click", () => resetMapView());
+};
+
+const renderBenchmarkBarHtml = (label, value, max, isPrimary) => {
+    const pct = Math.min(100, Math.max(2, (value / max) * 100));
+    return `
+        <div class="benchmark-row ${isPrimary ? "benchmark-primary" : ""}">
+            <span class="benchmark-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
+            <strong>${d3.format(",.0f")(value)}</strong>
+        </div>
+    `;
+};
+
+/**
+ * Render the 5-step + No Data legend (#legend) synchronized with the active palette.
+ */
+const renderSteppedLegend = () => {
+    const paletteObj = PALETTES[appState.palette] || PALETTES.default;
+    const isDark = typeof document !== "undefined" && document.body.classList.contains("dark-mode");
+    const legendContainer = d3.select("#legend");
+    if (legendContainer.empty()) return;
+
+    const noDataBg = isDark
+        ? `repeating-linear-gradient(135deg, ${NO_DATA_COLORS.darkBase}, ${NO_DATA_COLORS.darkBase} 5px, ${NO_DATA_COLORS.darkStroke} 5px, ${NO_DATA_COLORS.darkStroke} 7px)`
+        : `repeating-linear-gradient(135deg, ${NO_DATA_COLORS.lightBase}, ${NO_DATA_COLORS.lightBase} 5px, ${NO_DATA_COLORS.lightStroke} 5px, ${NO_DATA_COLORS.lightStroke} 7px)`;
+
+    const buttons = legendContainer.selectAll("button.legend-item")
+        .data(RATE_BUCKETS, bucket => bucket.key)
+        .join(
+            enter => enter.append("button")
+                .attr("type", "button")
+                .attr("class", "legend-item"),
+            update => update,
+            exit => exit.remove()
+        );
+
+    buttons
+        .classed("active", bucket => appState.selectedBucket === bucket.key)
+        .classed("is-preview", bucket => appState.hoveredBucket === bucket.key && appState.selectedBucket !== bucket.key)
+        .classed("legend-dark-text", bucket => {
+            if (bucket.key === "no-data") return !isDark;
+            return bucket.colorIndex <= paletteObj.textDarkUntilStep;
+        })
+        .classed("legend-light-text", bucket => {
+            if (bucket.key === "no-data") return isDark;
+            return bucket.colorIndex > paletteObj.textDarkUntilStep;
+        })
+        .attr("aria-pressed", bucket => appState.selectedBucket === bucket.key ? "true" : "false")
+        .attr("aria-label", bucket => `Filter by rate tier ${bucket.label} per 100,000`)
+        .style("background", bucket => {
+            if (bucket.key === "no-data") return noDataBg;
+            return paletteObj.colors[bucket.colorIndex];
+        })
+        .html(bucket => {
+            const subLabel = bucket.key === "no-data" ? "Excluded from rank" : "per 100k";
+            return `<span class="legend-range">${escapeHtml(bucket.label)}</span><small class="legend-sub">${escapeHtml(subLabel)}</small>`;
+        })
+        .on("mouseenter", (event, bucket) => {
+            appState.hoveredBucket = bucket.key;
+            legendContainer.selectAll("button.legend-item")
+                .classed("is-preview", b => b.key === bucket.key && appState.selectedBucket !== b.key);
+            updateMapStyles();
+        })
+        .on("mouseleave", () => {
+            appState.hoveredBucket = null;
+            legendContainer.selectAll("button.legend-item").classed("is-preview", false);
+            updateMapStyles();
+        })
+        .on("focus", (event, bucket) => {
+            appState.hoveredBucket = bucket.key;
+            legendContainer.selectAll("button.legend-item")
+                .classed("is-preview", b => b.key === bucket.key && appState.selectedBucket !== b.key);
+            updateMapStyles();
+        })
+        .on("blur", () => {
+            appState.hoveredBucket = null;
+            legendContainer.selectAll("button.legend-item").classed("is-preview", false);
+            updateMapStyles();
+        })
+        .on("click", (event, bucket) => {
+            event.stopPropagation();
+            appState.selectedBucket = appState.selectedBucket === bucket.key ? null : bucket.key;
+            appState.hoveredBucket = null;
+
+            legendContainer.selectAll("button.legend-item")
+                .classed("active", b => appState.selectedBucket === b.key)
+                .classed("is-preview", false)
+                .attr("aria-pressed", b => appState.selectedBucket === b.key ? "true" : "false");
+
+            updateMapStyles();
+            renderBarChart();
+            updateResetFiltersState();
+        });
+};
+
+/**
+ * Determine whether any filter or non-default sort is currently active.
+ */
+const hasActiveFilters = () => appState.activeContinentFilter !== "All"
+    || (appState.activeBloc && appState.activeBloc !== "all")
+    || appState.jurisdictionTypeFilter !== "all"
+    || appState.rateRangeFilter !== "all"
+    || appState.sortOrder !== "highest"
+    || appState.selectedBucket !== null
+    || Boolean(appState.searchQuery);
+
+const updateResetFiltersState = () => {
+    const active = hasActiveFilters();
+    d3.selectAll("#reset-filter, #empty-state-reset").property("disabled", !active);
+};
+
+/**
+ * Synchronize all filter controls across top bar and unified toolbar with appState.
+ */
+const syncFilterControlsUI = () => {
+    d3.select("#continent-filters").selectAll("button.chip")
+        .classed("active", value => value === appState.activeContinentFilter)
+        .attr("aria-pressed", value => value === appState.activeContinentFilter ? "true" : "false");
+
+    d3.select("#filter-continent").property("value", appState.activeContinentFilter);
+    d3.select("#filter-bloc").property("value", appState.activeBloc || "all");
+    d3.select("#top-bloc-select").property("value", appState.activeBloc || "all");
+    d3.select("#filter-jurisdiction-type").property("value", appState.jurisdictionTypeFilter);
+    d3.select("#filter-rate-range").property("value", appState.rateRangeFilter);
+    d3.select("#filter-sort").property("value", appState.sortOrder);
+    d3.select("#palette-select").property("value", appState.palette);
+
+    d3.select("#view-top-15")
+        .classed("active", appState.chartViewLimit === "top15")
+        .attr("aria-pressed", appState.chartViewLimit === "top15" ? "true" : "false");
+    d3.select("#view-show-all")
+        .classed("active", appState.chartViewLimit === "all")
+        .attr("aria-pressed", appState.chartViewLimit === "all" ? "true" : "false");
+
+    d3.select("#chart-scroll-region")
+        .classed("is-scrollable", appState.chartViewLimit === "all");
+
+    const titleEl = typeof document !== "undefined" ? document.getElementById("explorer-heading-title") : null;
+    if (titleEl) {
+        titleEl.innerHTML = appState.chartViewLimit === "top15"
+            ? `Top 15 <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`
+            : `All matching <button class="glossary-trigger" type="button" data-glossary="jurisdiction">jurisdictions</button>`;
+        setupGlossaryTooltips();
+    }
+
+    updateResetFiltersState();
+};
+
+/**
+ * Reset all filters and sorting to their documented global defaults.
+ */
+const resetAllFilters = () => {
+    activeContinentFilter = "All";
+    appState.activeContinentFilter = "All";
+    appState.activeBloc = "all";
+    appState.jurisdictionTypeFilter = "all";
+    appState.rateRangeFilter = "all";
+    appState.sortOrder = "highest";
+    appState.selectedBucket = null;
+    appState.hoveredBucket = null;
+    appState.searchQuery = "";
+
+    d3.select("#country-search").property("value", "");
+    d3.select("#search-suggestions").classed("visible", false).html("");
+
+    syncFilterControlsUI();
+    renderSteppedLegend();
+    updateMapStyles();
+    renderBarChart();
+};
+
+/**
+ * Apply a Geopolitical & Historical Bloc filter selection ("all" / "All / Reset" or bloc key).
+ */
+const applyBlocFilter = blocKey => {
+    const normalized = !blocKey || blocKey === "all" || blocKey === "All / Reset" ? "all" : blocKey;
+    appState.activeBloc = normalized;
+    syncFilterControlsUI();
+    updateMapStyles();
+    renderBarChart();
+};
+
+/**
+ * Set up all UI event listeners.
+ */
+const setupControls = () => {
+    const updateThemeButtonText = () => {
+        if (typeof document === "undefined") return;
+        const isDark = document.body.classList.contains("dark-mode");
+        d3.select("#theme-toggle")
+            .attr("aria-pressed", isDark ? "true" : "false")
+            .html(isDark ? "☀ <span>Light mode</span>" : "◐ <span>Dark mode</span>");
+    };
+    updateThemeButtonText();
+
+    d3.select("#theme-toggle").on("click", () => {
+        document.body.classList.toggle("dark-mode");
+        const isDark = document.body.classList.contains("dark-mode");
+        try {
+            sessionStorage.setItem("wpb_dark_mode", String(isDark));
+        } catch (_) {}
+        updateThemeButtonText();
+        applyPaletteThemeVariables();
+        defineMapPatterns(appState.svg);
+        renderSteppedLegend();
+        updateMapStyles();
+        renderBarChart(false);
+    });
+
+    // Top bar continent chips
+    d3.select("#continent-filters")
+        .selectAll("button.chip")
+        .data(CONTINENT_OPTIONS)
         .join("button")
-        .attr("class", d => `filter ${d.isActive ? "active" : ""}`)
-        .text(d => d.label)
-        .on("click", (e, d) => {
-            console.log("DOM event", e);
-            console.log("Attached datum", d);
+        .attr("type", "button")
+        .attr("class", continent => `chip ${continent === appState.activeContinentFilter ? "active" : ""}`)
+        .attr("aria-pressed", continent => continent === appState.activeContinentFilter ? "true" : "false")
+        .text(continent => continent)
+        .on("click", (event, continent) => {
+            activeContinentFilter = continent;
+            appState.activeContinentFilter = continent;
+            syncFilterControlsUI();
+            updateMapStyles();
+            renderBarChart();
+        });
 
-            if (!d.isActive) {
-                filters_screen.forEach(filter => {
-                    filter.isActive = d.id === filter.id;
-                });
+    // Geopolitical & Historical Blocs controls (top bar & unified filter toolbar)
+    d3.selectAll("#filter-bloc, #top-bloc-select").on("change", event => {
+        applyBlocFilter(event.target.value);
+    });
 
-                d3.selectAll("#filters_screen .filter")
-                    .classed("active", filter => filter.isActive);
+    // Country search input & suggestions
+    d3.select("#country-search")
+        .on("input", event => {
+            appState.searchQuery = event.target.value.trim().toLowerCase();
+            renderSearchSuggestions();
+            updateMapStyles();
+            renderBarChart();
+            updateResetFiltersState();
+        })
+        .on("keydown", handleSearchKeydown)
+        .on("focus", renderSearchSuggestions)
+        .on("blur", () => {
+            setTimeout(() => {
+                d3.select("#search-suggestions").classed("visible", false);
+            }, 160);
+        });
 
-                updateHistogram(d.id, data);
-                updateScatterplot();
+    d3.select("#search-suggestions").on("mousedown", event => event.preventDefault());
+
+    // Accessibility palette selector
+    d3.select("#palette-select")
+        .property("value", appState.palette)
+        .on("change", event => {
+            const val = event.target.value;
+            if (PALETTES[val]) {
+                appState.palette = val;
+            }
+            try {
+                sessionStorage.setItem("wpb_palette", appState.palette);
+            } catch (_) {}
+            applyPaletteThemeVariables();
+            renderSteppedLegend();
+            updateMapStyles();
+            renderBarChart(false);
+        });
+
+    // Map Reset View button
+    d3.select("#reset-map").on("click", resetMapView);
+
+    // Unified Filter Toolbar controls
+    d3.select("#filter-continent").on("change", event => {
+        activeContinentFilter = event.target.value;
+        appState.activeContinentFilter = event.target.value;
+        syncFilterControlsUI();
+        updateMapStyles();
+        renderBarChart();
+    });
+
+    d3.select("#filter-jurisdiction-type").on("change", event => {
+        appState.jurisdictionTypeFilter = event.target.value;
+        syncFilterControlsUI();
+        updateMapStyles();
+        renderBarChart();
+    });
+
+    d3.select("#filter-rate-range").on("change", event => {
+        appState.rateRangeFilter = event.target.value;
+        syncFilterControlsUI();
+        updateMapStyles();
+        renderBarChart();
+    });
+
+    d3.select("#filter-sort").on("change", event => {
+        appState.sortOrder = event.target.value;
+        syncFilterControlsUI();
+        renderBarChart();
+    });
+
+    d3.select("#reset-filter").on("click", resetAllFilters);
+    d3.select("#empty-state-reset").on("click", resetAllFilters);
+
+    // Top 15 vs Show All segmented control
+    d3.select("#view-top-15").on("click", () => {
+        if (appState.chartViewLimit === "top15") return;
+        appState.chartViewLimit = "top15";
+        const scrollRegion = typeof document !== "undefined" ? document.getElementById("chart-scroll-region") : null;
+        if (scrollRegion) scrollRegion.scrollTop = 0;
+        syncFilterControlsUI();
+        renderBarChart();
+    });
+
+    d3.select("#view-show-all").on("click", () => {
+        if (appState.chartViewLimit === "all") return;
+        appState.chartViewLimit = "all";
+        syncFilterControlsUI();
+        renderBarChart();
+    });
+
+    // Responsive resize observer for the horizontal bar chart
+    const chartWrapper = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
+    if (chartWrapper && typeof ResizeObserver !== "undefined") {
+        let lastWidth = chartWrapper.clientWidth;
+        const observer = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                const newWidth = Math.round(entry.contentRect.width);
+                if (newWidth > 0 && Math.abs(newWidth - lastWidth) > 8) {
+                    lastWidth = newWidth;
+                    renderBarChart(false);
+                }
+            }
+        });
+        observer.observe(chartWrapper);
+    }
+
+    syncFilterControlsUI();
+};
+
+/**
+ * Search autocomplete helpers.
+ */
+const getMatchingSearchRows = () => {
+    const query = appState.searchQuery;
+    if (!query) return [];
+    return appState.data
+        .filter(row => row.country.toLowerCase().includes(query)
+            || row.iso.toLowerCase().includes(query)
+            || normaliseJurisdictionName(row.country).toLowerCase().includes(query))
+        .sort((a, b) => {
+            const aStarts = a.country.toLowerCase().startsWith(query) || a.iso.toLowerCase() === query;
+            const bStarts = b.country.toLowerCase().startsWith(query) || b.iso.toLowerCase() === query;
+            return Number(bStarts) - Number(aStarts) || a.country.localeCompare(b.country);
+        })
+        .slice(0, 8);
+};
+
+const renderSearchSuggestions = () => {
+    const suggestions = getMatchingSearchRows();
+    const container = d3.select("#search-suggestions");
+    container.classed("visible", Boolean(appState.searchQuery));
+
+    if (!appState.searchQuery) {
+        container.html("");
+        return;
+    }
+    if (!suggestions.length) {
+        container.html('<div class="suggestion-empty">No matching jurisdiction found</div>');
+        return;
+    }
+
+    container.selectAll("button.suggestion")
+        .data(suggestions, row => row.iso)
+        .join("button")
+        .attr("type", "button")
+        .attr("class", "suggestion")
+        .attr("role", "option")
+        .html(row => {
+            const rateLabel = Number.isFinite(row.rate) ? `${d3.format(",")(row.rate)} per 100k` : "No data";
+            return `<span>${escapeHtml(row.country)} <strong>(${escapeHtml(row.iso)})</strong></span><small>${escapeHtml(regionForJurisdiction(row))} · ${escapeHtml(rateLabel)}</small>`;
+        })
+        .on("click", (event, row) => chooseSearchSuggestion(row));
+};
+
+const chooseSearchSuggestion = row => {
+    const feature = appState.featuresByIso.get(row.iso) || appState.markersByIso.get(row.iso) || null;
+    d3.select("#country-search").property("value", row.country);
+    appState.searchQuery = "";
+    d3.select("#search-suggestions").classed("visible", false).html("");
+    handleJurisdictionSelect(row, feature, true, row.iso);
+    updateMapStyles();
+    renderBarChart();
+    updateResetFiltersState();
+};
+
+const handleSearchKeydown = event => {
+    const suggestionNodes = d3.selectAll("#search-suggestions .suggestion").nodes();
+    const activeIndex = suggestionNodes.indexOf(document.activeElement);
+
+    if (event.key === "ArrowDown" && suggestionNodes.length) {
+        event.preventDefault();
+        suggestionNodes[(activeIndex + 1) % suggestionNodes.length].focus();
+    } else if (event.key === "ArrowUp" && suggestionNodes.length) {
+        event.preventDefault();
+        suggestionNodes[(activeIndex - 1 + suggestionNodes.length) % suggestionNodes.length].focus();
+    } else if (event.key === "Enter") {
+        event.preventDefault();
+        const topMatch = getMatchingSearchRows()[0];
+        if (topMatch) chooseSearchSuggestion(topMatch);
+    } else if (event.key === "Escape") {
+        d3.select("#search-suggestions").classed("visible", false);
+    }
+};
+
+/**
+ * Render and animate the responsive D3/SVG Horizontal Bar Chart (#jurisdiction-bar-chart).
+ * Bound by canonical ISO code (d => d.iso). Excludes No Data records from rankings.
+ */
+const renderBarChart = (animate = true) => {
+    const containerNode = typeof document !== "undefined" ? document.getElementById("jurisdiction-bar-chart") : null;
+    if (!containerNode || !appState.data.length) return;
+
+    const allFilteredRows = getFilteredJurisdictions();
+    const displayedRows = appState.chartViewLimit === "top15"
+        ? allFilteredRows.slice(0, 15)
+        : allFilteredRows;
+
+    // Update telemetry in the required contract:
+    // "Showing X jurisdictions in [Bloc] — Median Rate: Y per 100k"
+    const telemetryText = formatSummaryTelemetry(
+        allFilteredRows,
+        appState.activeBloc,
+        appState.activeContinentFilter
+    );
+    d3.select("#leaderboard-summary").text(telemetryText);
+    updateResetFiltersState();
+
+    // Handle empty state cleanly
+    const emptyStateEl = document.getElementById("chart-empty-state");
+    if (!displayedRows.length) {
+        d3.select(containerNode).selectAll("svg").style("display", "none");
+        if (emptyStateEl) emptyStateEl.hidden = false;
+        return;
+    }
+    if (emptyStateEl) emptyStateEl.hidden = true;
+    d3.select(containerNode).selectAll("svg").style("display", "block");
+
+    const containerWidth = Math.max(containerNode.clientWidth || 720, 320);
+    const isNarrow = containerWidth < 520;
+    const chartMargin = {
+        top: 34,
+        right: isNarrow ? 58 : 74,
+        bottom: 28,
+        left: isNarrow ? 148 : 225
+    };
+    const rowHeight = 32;
+    const barHeight = 20;
+    const plotWidth = Math.max(120, containerWidth - chartMargin.left - chartMargin.right);
+    const plotHeight = displayedRows.length * rowHeight;
+    const totalHeight = plotHeight + chartMargin.top + chartMargin.bottom;
+
+    const maxRateInView = d3.max(displayedRows, d => d.rate) || 100;
+    const domainMax = Math.max(maxRateInView * 1.04, 100);
+
+    rateScale
+        .domain([0, domainMax])
+        .range([0, plotWidth])
+        .nice();
+
+    const svg = d3.select(containerNode)
+        .selectAll("svg.bar-chart-svg")
+        .data([null])
+        .join(enter => {
+            const s = enter.append("svg")
+                .attr("class", "bar-chart-svg")
+                .attr("role", "region")
+                .attr("aria-label", "Horizontal bar chart of incarceration rates per 100,000 population");
+            s.append("g").attr("class", "chart-grid-group");
+            s.append("g").attr("class", "chart-axis-top");
+            s.append("g").attr("class", "chart-bars-layer");
+            s.append("g").attr("class", "chart-axis-bottom");
+            return s;
+        });
+
+    appState.barChartSvg = svg;
+
+    svg
+        .attr("viewBox", `0 0 ${containerWidth} ${totalHeight}`)
+        .attr("width", containerWidth)
+        .attr("height", totalHeight);
+
+    const transitionDuration = animate ? 320 : 0;
+    const t = svg.transition().duration(transitionDuration).ease(d3.easeCubicOut);
+
+    const tickCount = isNarrow ? 4 : 6;
+    const topAxis = d3.axisTop(rateScale).ticks(tickCount).tickSizeOuter(0).tickFormat(d3.format(","));
+    const bottomAxis = d3.axisBottom(rateScale).ticks(tickCount).tickSizeOuter(0).tickFormat(d3.format(","));
+    const gridLines = d3.axisTop(rateScale).ticks(tickCount).tickSize(-plotHeight).tickFormat("");
+
+    svg.select(".chart-grid-group")
+        .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`)
+        .transition(t)
+        .call(gridLines)
+        .selection()
+        .select(".domain")
+        .remove();
+
+    svg.select(".chart-axis-top")
+        .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`)
+        .transition(t)
+        .call(topAxis);
+
+    svg.select(".chart-axis-bottom")
+        .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top + plotHeight})`)
+        .transition(t)
+        .call(bottomAxis);
+
+    const barsLayer = svg.select(".chart-bars-layer")
+        .attr("transform", `translate(${chartMargin.left}, ${chartMargin.top})`);
+
+    const maxLabelChars = isNarrow ? 19 : 30;
+    const truncateLabel = text => text.length > maxLabelChars ? `${text.slice(0, maxLabelChars - 1)}…` : text;
+
+    const getBarFill = row => getSolidColorForBucket(bucketForRate(row.rate));
+
+    const barGroups = barsLayer.selectAll("g.chart-bar-group")
+        .data(displayedRows, d => d.iso)
+        .join(
+            enter => {
+                const g = enter.append("g")
+                    .attr("class", "chart-bar-group")
+                    .attr("data-iso", d => d.iso)
+                    .attr("transform", (d, i) => `translate(0, ${i * rowHeight})`)
+                    .attr("tabindex", "0")
+                    .attr("role", "button")
+                    .style("opacity", 0);
+
+                g.append("rect")
+                    .attr("class", "chart-row-bg")
+                    .attr("x", -chartMargin.left + 2)
+                    .attr("y", 1)
+                    .attr("height", rowHeight - 2)
+                    .attr("rx", 4);
+
+                g.append("rect")
+                    .attr("class", "chart-selection-pill")
+                    .attr("x", -chartMargin.left + 4)
+                    .attr("y", 5)
+                    .attr("width", 3.5)
+                    .attr("height", rowHeight - 10)
+                    .attr("rx", 1.5);
+
+                g.append("rect")
+                    .attr("class", "chart-bar-track")
+                    .attr("x", 0)
+                    .attr("y", (rowHeight - barHeight) / 2)
+                    .attr("height", barHeight)
+                    .attr("rx", 3);
+
+                g.append("rect")
+                    .attr("class", "chart-bar-rect")
+                    .attr("x", 0)
+                    .attr("y", (rowHeight - barHeight) / 2)
+                    .attr("width", 0)
+                    .attr("height", barHeight)
+                    .attr("rx", 3);
+
+                g.append("text")
+                    .attr("class", "chart-y-label")
+                    .attr("x", -10)
+                    .attr("y", rowHeight / 2)
+                    .attr("dy", "0.35em")
+                    .attr("text-anchor", "end");
+
+                g.append("text")
+                    .attr("class", "chart-value-label")
+                    .attr("y", rowHeight / 2)
+                    .attr("dy", "0.35em");
+
+                return g;
+            },
+            update => update,
+            exit => exit
+                .transition()
+                .duration(180)
+                .style("opacity", 0)
+                .remove()
+        );
+
+    barGroups
+        .attr("data-iso", d => d.iso)
+        .attr("aria-label", (d, i) => {
+            const cat = getJurisdictionCategoryLabel(d);
+            return `Rank ${i + 1}: ${d.country} (${d.iso}, ${cat}), ${d3.format(",")(d.rate)} prisoners per 100,000`;
+        })
+        .on("mouseenter", (event, d) => handleJurisdictionHover(event, d, null, d.iso))
+        .on("mousemove", event => moveFloatingTooltip(event))
+        .on("mouseleave", () => handleJurisdictionLeave())
+        .on("focus", (event, d) => handleJurisdictionHover(event, d, null, d.iso))
+        .on("blur", () => handleJurisdictionLeave())
+        .on("click", (event, d) => {
+            handleJurisdictionSelect(d, null, true, d.iso);
+        })
+        .on("keydown", (event, d) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleJurisdictionSelect(d, null, true, d.iso);
+            } else if (event.key === "Escape") {
+                handleJurisdictionLeave();
             }
         });
 
-    // Extension: screen size filter (scatterplot only)
-    d3.select("#filters_size")
-        .selectAll(".filter")
-        .data(filters_size)
-        .join("button")
-        .attr("class", d => `filter ${d.isActive ? "active" : ""}`)
-        .text(d => d.label)
-        .on("click", (e, d) => {
-            if (!d.isActive) {
-                filters_size.forEach(filter => {
-                    filter.isActive = d.id === filter.id;
-                });
+    barGroups.select(".chart-row-bg")
+        .attr("width", containerWidth - 4);
 
-                d3.selectAll("#filters_size .filter")
-                    .classed("active", filter => filter.isActive);
+    barGroups.select(".chart-bar-track")
+        .attr("width", plotWidth);
 
-                updateScatterplot();
-            }
+    barGroups.select(".chart-y-label")
+        .text((d, i) => {
+            const prefix = `${i + 1}. `;
+            // Only overseas_autonomous territories display the square marker indicator ▪
+            const suffix = d.jurisdiction_type === "overseas_autonomous" ? " ▪" : "";
+            return `${prefix}${truncateLabel(d.country)}${suffix}`;
         });
 
-    const updateHistogram = (filterId, data) => {
-        const updatedData = filterId === "all"
-            ? data
-            : data.filter(tv => tv.screenTech === filterId);
+    barGroups.transition(t)
+        .style("opacity", 1)
+        .attr("transform", (d, i) => `translate(0, ${i * rowHeight})`);
 
-        const updatedBins = binGenerator(updatedData);
+    barGroups.select(".chart-bar-rect")
+        .attr("fill", d => getBarFill(d))
+        .transition(t)
+        .attr("width", d => Math.max(3, rateScale(d.rate)));
 
-        d3.selectAll("#histogram rect.bar")
-            .data(updatedBins)
-            .transition()
-            .duration(500)
-            .ease(d3.easeCubicInOut)
-            .attr("y", d => yScale(d.length))
-            .attr("height", d => innerHeight - yScale(d.length));
+    barGroups.select(".chart-value-label")
+        .text(d => d3.format(",")(d.rate))
+        .transition(t)
+        .attr("x", d => Math.max(3, rateScale(d.rate)) + 7)
+        .attr("text-anchor", "start");
+
+    updateBarChartHighlightStates();
+};
+
+/**
+ * Synchronize hover and pinned selection classes on the horizontal bar chart by canonical ISO.
+ */
+const updateBarChartHighlightStates = () => {
+    if (!appState.barChartSvg) return;
+
+    const pinnedIso = appState.pinnedJurisdictionId;
+    const hoveredIso = appState.hoveredJurisdictionId;
+
+    appState.barChartSvg.selectAll("g.chart-bar-group")
+        .classed("is-selected", d => Boolean(pinnedIso && d.iso === pinnedIso))
+        .classed("is-hovered", d => Boolean(hoveredIso && d.iso === hoveredIso))
+        .attr("aria-pressed", d => Boolean(pinnedIso && d.iso === pinnedIso) ? "true" : "false");
+};
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+        escapeHtml,
+        getJurisdictionCategoryLabel,
+        applyPaletteThemeVariables,
+        setupGlossaryTooltips,
+        showFloatingTooltip,
+        moveFloatingTooltip,
+        hideFloatingTooltip,
+        resolveCanonicalEntity,
+        handleJurisdictionHover,
+        handleJurisdictionLeave,
+        handleJurisdictionSelect,
+        renderDetailsPanel,
+        renderSteppedLegend,
+        hasActiveFilters,
+        syncFilterControlsUI,
+        resetAllFilters,
+        applyBlocFilter,
+        setupControls,
+        renderBarChart,
+        updateBarChartHighlightStates
     };
-
-    // Extension: show only circles matching BOTH the screen type and screen size filters
-    const updateScatterplot = () => {
-        const activeTech = filters_screen.find(f => f.isActive).id;
-        const activeSize = filters_size.find(f => f.isActive).id;
-
-        const isVisible = d =>
-            (activeTech === "all" || d.screenTech === activeTech) &&
-            (activeSize === "all" || Math.round(d.screenSize) === +activeSize);
-
-        hideTooltip(".tooltip-scatter");
-
-        innerChartS.selectAll("circle")
-            .style("pointer-events", d => isVisible(d) ? "auto" : "none")
-            .transition()
-            .duration(500)
-            .attr("opacity", d => isVisible(d) ? 0.5 : 0);
-    };
-};
-
-/************************************/
-/*          Create tooltips         */
-/************************************/
-// Builds a hidden tooltip (rect + text) inside the given inner chart
-const appendTooltip = (chart, className) => {
-    const tooltip = chart
-        .append("g")
-        .attr("class", `tooltip ${className}`)
-        .style("opacity", 0);
-
-    tooltip
-        .append("rect")
-        .attr("width", tooltipWidth)
-        .attr("height", tooltipHeight)
-        .attr("rx", 3)
-        .attr("ry", 3)
-        .attr("fill", barColor)
-        .attr("fill-opacity", 0.85);
-
-    tooltip
-        .append("text")
-        .attr("fill", white);
-};
-
-const createTooltip = () => {
-    appendTooltip(innerChartS, "tooltip-scatter");   // scatterplot
-    appendTooltip(innerChartH, "tooltip-hist");      // Extension: histogram
-};
-
-/************************************/
-/*        Tooltip helpers           */
-/************************************/
-// Fill the tooltip with one line per item, resize it to fit, and place it above (x, y)
-const showTooltip = (selector, lines, x, y) => {
-    const tooltip = d3.select(selector);
-
-    // One <tspan> per line; first line bold
-    tooltip.select("text")
-        .selectAll("tspan")
-        .data(lines)
-        .join("tspan")
-        .attr("x", tooltipPadding)
-        .attr("y", (d, i) => tooltipPadding + 12 + i * tooltipLineHeight)
-        .style("font-weight", (d, i) => i === 0 ? 900 : 400)
-        .text(d => d);
-
-    // Resize background to fit the text
-    const textBox = tooltip.select("text").node().getBBox();
-    const w = Math.max(tooltipWidth, textBox.width + 2 * tooltipPadding);
-    const h = lines.length * tooltipLineHeight + 2 * tooltipPadding - 2;
-
-    tooltip.select("rect")
-        .attr("width", w)
-        .attr("height", h);
-
-    // Centre above the point, keeping the tooltip inside the chart
-    let tx = Math.min(Math.max(x - w / 2, 0), innerWidth - w);
-    let ty = y - h - 10;
-    if (ty < 0) ty = y + 10;   // flip below if there's no room above
-
-    tooltip
-        .attr("transform", `translate(${tx}, ${ty})`)
-        .raise()
-        .transition()
-        .duration(200)
-        .style("opacity", 1);
-};
-
-const hideTooltip = (selector) => {
-    d3.select(selector)
-        .interrupt()
-        .style("opacity", 0)
-        .attr("transform", `translate(0, 500)`);
-};
-
-// "philips" -> "Philips", "tcl electronics" -> "Tcl Electronics"
-const capitalise = str => str.replace(/\b\w/g, c => c.toUpperCase());
-
-/************************************/
-/*       Handle mouse events        */
-/************************************/
-const handleMouseEvents = () => {
-
-    // Scatterplot: brand, model and screen size
-    innerChartS.selectAll("circle")
-        .on("mouseenter", (e, d) => {
-            console.log("Mouse entered circle", d);
-
-            const cx = +e.target.getAttribute("cx");
-            const cy = +e.target.getAttribute("cy");
-
-            showTooltip(".tooltip-scatter", [
-                capitalise(d.brand),
-                `Model: ${d.model}`,
-                `Screen size: ${d.screenSize}"`
-            ], cx, cy);
-        })
-        .on("mouseleave", (e, d) => {
-            console.log("Mouse left circle", d);
-            hideTooltip(".tooltip-scatter");
-        });
-
-    // Extension: histogram tooltip with TV count and energy range of the bar
-    innerChartH.selectAll("rect.bar")
-        .on("mouseenter", (e, d) => {
-            const x = +e.target.getAttribute("x") + +e.target.getAttribute("width") / 2;
-            const y = yScale(d.length);   // final bar top (safe during transitions)
-
-            showTooltip(".tooltip-hist", [
-                `${d3.format(",")(d.length)} TVs`,
-                `${d3.format(",")(d.x0)}–${d3.format(",")(d.x1)} kWh/year`
-            ], x, y);
-
-            d3.select(e.target).attr("fill", gray).attr("fill-opacity", 0.8);
-        })
-        .on("mouseleave", (e) => {
-            hideTooltip(".tooltip-hist");
-            d3.select(e.target).attr("fill", slateGray).attr("fill-opacity", 1);
-        });
-};
+}

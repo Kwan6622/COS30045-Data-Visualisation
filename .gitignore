@@ -5,3 +5,6 @@ lectures/*.pdf
 # Bỏ qua toàn bộ PDF trong lab
 lab/**/*.pdf
 lab/*.pdf
+
+#PDF critique file
+critique_and_project_assessment/COS30045-Assessment.pdf

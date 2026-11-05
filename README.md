@@ -43,14 +43,10 @@ COS30045-Data-Visualisation/
 │
 ├── README.md
 ├── lab/
-├── lectures/
 ├── tv_website/
 ├── demonstration_1/
 ├── demonstration_2/
-├── critique_and_project_assessment/
-├── COS30045_Unit_Outline_Sep2026.pdf
-├── Swinburne_VPN_Installation_Guide_Personal_Devices.pdf
-└── ...
+└── critique_and_project_assessment/
 ```
 
 Each folder contains the files, datasets, visualisations and documentation created for the corresponding activity.
@@ -97,15 +93,6 @@ Through this unit, I aim to develop the ability to:
 2. Apply a structured design process when creating visualisations.
 3. Develop and iterate data visualisation designs using sketches and low-fidelity prototypes.
 4. Create interactive web-based data visualisations using real-world datasets.
-
----
-
-## Website
-
-Some exercises in this repository contribute to the development of an Appliance Energy Consumption website.
-
-**Live Website:**
-[Appliance Energy Consumption Website](https://mercury.swin.edu.au/cos30045/s104992981/test/index.html)
 
 ---
 

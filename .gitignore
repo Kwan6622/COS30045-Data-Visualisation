@@ -1,6 +1,5 @@
 # Bỏ qua toàn bộ PDF trong lectures
-lectures/**/*.pdf
-lectures/*.pdf
+lectures
 
 # Bỏ qua toàn bộ PDF trong lab
 lab/**/*.pdf
@@ -8,3 +7,7 @@ lab/*.pdf
 
 #PDF critique file
 critique_and_project_assessment/COS30045-Assessment.pdf
+
+#Main page
+COS30045_Unit_Outline_Sep2026.pdf
+Swinburne_VPN_Installation_Guide_Personal_Devices.pdf

@@ -1,3 +1,7 @@
-*.pdf
+# Bỏ qua toàn bộ PDF trong lectures
+lectures/**/*.pdf
+lectures/*.pdf
 
-/lectures
+# Bỏ qua toàn bộ PDF trong lab
+lab/**/*.pdf
+lab/*.pdf

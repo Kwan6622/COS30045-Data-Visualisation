@@ -5,6 +5,10 @@ lectures
 lab/**/*.pdf
 lab/*.pdf
 
+# Ignore datasets & notes
+data/ 
+*.txt
+
 #PDF critique file
 critique_and_project_assessment/COS30045-Assessments.pdf
 

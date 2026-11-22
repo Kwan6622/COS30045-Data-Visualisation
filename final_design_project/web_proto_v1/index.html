@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outside the Car</title>
+  <meta name="description" content="Who pays the price on Australia's roads? An interactive story about pedestrians and cyclists hospitalised after road crashes, 2011–2021 (BITRE data).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // ?theme=light|dark wins (used for Design Book screenshots), then the saved choice
+    try { const t = new URLSearchParams(location.search).get("theme") || localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) { /* storage blocked */ }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top">Outside the Car</a>
+      <nav aria-label="Story chapters">
+        <ul class="nav-links">
+          <li><a href="#who">1 · Who</a></li>
+          <li><a href="#how-bad">2 · How badly</a></li>
+          <li><a href="#age">3 · Age</a></li>
+          <li><a href="#when-where">4 · When &amp; where</a></li>
+          <li><a href="#act">5 · What you can do</a></li>
+          <li><a href="#limits">Data notes</a></li>
+        </ul>
+      </nav>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+    </div>
+    <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+  </header>
+
+  <main id="main">
+    <!-- ============ OPENING ============ -->
+    <section class="hero" id="top">
+      <div class="wrap">
+        <p class="eyebrow">Pedestrians and cyclists hospitalised after road crashes · Australia 2011–2021</p>
+        <h1>Every day, <span data-fact="beds">…</span> hospital beds hold someone who was walking or riding.</h1>
+        <p class="lede">Road safety news counts deaths. Far more people survive a crash and wake up in hospital. In 2021, <strong data-fact="vru2021">…</strong> of those hospital stays began with someone on foot or on a bike: about <strong>one every <span data-fact="every">…</span> minutes</strong>.</p>
+        <figure class="chart-card ward">
+          <figcaption class="chart-title" id="ward-title">The ward: one bed = one bed filled every day of the year (2011–2021 average)</figcaption>
+          <div class="legend"><span class="legend-item"><span class="swatch" style="background:var(--ped)"></span>Pedestrians</span><span class="legend-item"><span class="swatch" style="background:var(--cyc)"></span>Cyclists</span></div>
+          <div class="chart" id="chart-ward" role="img" aria-labelledby="ward-title"></div>
+          <p class="chart-note">Bed days from Traffic hospitalisations ÷ 4,018 days. Source: BITRE (2023).</p>
+        </figure>
+        <p class="message">Outside the car, your body is the only crumple zone, so the road has to protect it.</p>
+      </div>
+    </section>
+
+    <!-- ============ 1. WHO ============ -->
+    <section class="chapter" id="who">
+      <div class="wrap">
+        <p class="chapter-num">01 · Who is outside the car</p>
+        <h2>Cycling injuries keep rising, and pedestrian injuries are not falling</h2>
+        <p class="body">Pedestrians, cyclists and motorcyclists make up <strong data-fact="vruShare">…</strong> of all road-crash hospitalisations. Between 2012 and 2019, before COVID changed how people travelled, cyclist hospitalisations changed by <span class="hl-cyc" data-fact="cycChange">…</span> and pedestrian hospitalisations by <span class="hl-ped" data-fact="pedChange">…</span>. There is no sign of improvement for people on foot.</p>
+        <p class="question">Switch to <em>Count</em>: which group is largest, and which is growing fastest?</p>
+        <div class="controls" id="trend-controls" role="group" aria-label="Scale">
+          <button class="chip is-active" data-mode="index" aria-pressed="true">Growth (2012 = 100)</button>
+          <button class="chip" data-mode="hosp" aria-pressed="false">Count</button>
+        </div>
+        <figure class="chart-card">
+          <figcaption class="chart-title" id="trend-title">Hospitalisations per year by road user, Australia</figcaption>
+          <div class="chart" id="chart-trend" role="img" aria-labelledby="trend-title"></div>
+          <p class="chart-note">From 2017 NSW stopped counting some emergency-only care as admissions, so later years may understate the real change. 2020–21 are shaded because of COVID travel changes. Source: BITRE (2023).</p>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 2. HOW BADLY ============ -->
+    <section class="chapter" id="how-bad">
+      <div class="wrap">
+        <p class="chapter-num">02 · Your body is the only crumple zone</p>
+        <h2>Pedestrians stay in hospital twice as long as car occupants</h2>
+        <p class="body">A pedestrian admitted after a crash stays <strong class="hl-ped"><span data-fact="pedLos">…</span> days</strong> on average, against <span data-fact="carLos">…</span> days for someone inside a car. <span data-fact="pedDied">…</span> of pedestrian admissions end in death within 30 days, compared with <span data-fact="carDied">…</span> for car occupants. Pedestrians are <span data-fact="pedShareHosp">…</span> of hospitalisations but use <span data-fact="pedShareBed">…</span> of the bed days.</p>
+        <p class="question">Switch the measure: does the order of road users stay the same?</p>
+        <div class="controls" id="severity-controls" role="group" aria-label="Measure">
+          <button class="chip is-active" data-measure="los" aria-pressed="true">Days in hospital</button>
+          <button class="chip" data-measure="died_rate" aria-pressed="false">Died within 30 days</button>
+          <button class="chip" data-measure="ratio" aria-pressed="false">Bed days vs fair share</button>
+        </div>
+        <figure class="chart-card">
+          <figcaption class="chart-title" id="sev-title">How badly each road user is hurt, 2011–2021</figcaption>
+          <div class="chart" id="chart-severity" role="img" aria-labelledby="sev-title"></div>
+          <p class="chart-note">Days in hospital exclude patients who died within 30 days. Length of stay is a proxy for severity; it also reflects hospital practice.</p>
+        </figure>
+
+        <h3 style="margin-top:40px">How it happens: the data records what they collided with, not who was at fault</h3>
+        <p class="body"><strong data-fact="pedCar">…</strong> of pedestrian hospitalisations involved a collision with a car, pick-up truck or van. For cyclists the picture is different: <strong data-fact="cycFall">…</strong> were non-collision crashes such as falls, which points at road surfaces and lane design.</p>
+        <figure class="chart-card">
+          <figcaption class="chart-title" id="cp-title">What pedestrians and cyclists collided with, 2011–2021</figcaption>
+          <div class="legend" id="legend-cp"></div>
+          <div class="chart" id="chart-cp" role="img" aria-labelledby="cp-title"></div>
+          <p class="chart-note">Hover a segment to highlight the same category in both bars. "Other" includes other non-motor vehicles, animals, trains and unspecified.</p>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 3. AGE ============ -->
+    <section class="chapter" id="age">
+      <div class="wrap">
+        <p class="chapter-num">03 · It is someone's grandparent</p>
+        <h2>Older pedestrians are hurt the worst</h2>
+        <p class="body">A pedestrian aged 75 or over stays in hospital for <strong class="hl-ped"><span data-fact="oldLos">…</span> days</strong> on average, and <strong data-fact="oldDied">…</strong> of them dies within 30 days of admission. Per person, they are also among the most likely to be hospitalised.</p>
+        <p class="question">Switch to <em>Cyclists</em>: which age group is hurt most often, and does it match pedestrians?</p>
+        <div class="controls" id="age-group-controls" role="group" aria-label="Road user">
+          <button class="chip is-active" data-group="Pedestrian" aria-pressed="true">Pedestrians</button>
+          <button class="chip" data-group="Pedal cyclist" aria-pressed="false">Cyclists</button>
+        </div>
+        <div class="controls" id="age-measure-controls" role="group" aria-label="Measure" style="margin-top:0">
+          <button class="chip is-active" data-measure="los" aria-pressed="true">Days in hospital</button>
+          <button class="chip" data-measure="died_rate" aria-pressed="false">Died within 30 days</button>
+          <button class="chip" data-measure="rate" aria-pressed="false">Per 100,000 people</button>
+        </div>
+        <figure class="chart-card">
+          <figcaption class="chart-title" id="age-title">By age group</figcaption>
+          <div class="chart" id="chart-age" role="img" aria-labelledby="age-title"></div>
+          <p class="chart-note">Rates use ABS estimated resident population (2011–2021 average). "≈": BITRE age groups do not match ABS 5-year bands, so population was split evenly within a band.</p>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 4. WHEN & WHERE ============ -->
+    <section class="chapter" id="when-where">
+      <div class="wrap">
+        <p class="chapter-num">04 · When and where</p>
+        <h2>Pedestrians peak in winter, cyclists in the warmer months</h2>
+        <p class="body">Pedestrian hospitalisations rise from May to August; cyclist hospitalisations are highest in March and October and lowest in July. The data records the month, not the time of day, so darker evenings are a possible explanation, not a finding.</p>
+        <figure class="chart-card">
+          <figcaption class="chart-title" id="season-title">Hospitalisations in each month compared with the average month, 2011–2019</figcaption>
+          <div class="chart" id="chart-season" role="img" aria-labelledby="season-title"></div>
+          <p class="chart-note">2020–21 excluded so lockdowns do not distort the seasonal pattern.</p>
+        </figure>
+
+        <h3 style="margin-top:40px">Per person, the picture changes by state</h3>
+        <p class="body">Counts follow population, so the map shows hospitalisations per 100,000 people. Click a state to compare its trend with Australia.</p>
+        <p class="question">Which state has the highest rate for pedestrians, and is it the same for cyclists?</p>
+        <div class="controls" id="state-controls" role="group" aria-label="Road user">
+          <button class="chip is-active" data-group="Pedestrian" aria-pressed="true">Pedestrians</button>
+          <button class="chip" data-group="Pedal cyclist" aria-pressed="false">Cyclists</button>
+        </div>
+        <div class="split">
+          <figure class="chart-card">
+            <figcaption class="chart-title" id="state-title">Hospitalised per 100,000 people per year, 2011–2021</figcaption>
+            <div class="chart" id="chart-states" role="group" aria-labelledby="state-title"></div>
+            <div class="ramp-legend" id="state-legend"></div>
+          </figure>
+          <figure class="chart-card" aria-live="polite">
+            <figcaption class="chart-title" id="state-detail-title">Select a state</figcaption>
+            <div class="chart" id="chart-state-detail"></div>
+          </figure>
+        </div>
+        <p class="chart-note">BITRE state counts ÷ ABS estimated resident population (sum of LGAs, 30 June). Cells suppressed by BITRE ("n.p.") are treated as missing.</p>
+      </div>
+    </section>
+
+    <!-- ============ 5. WHAT YOU CAN DO ============ -->
+    <section class="chapter" id="act">
+      <div class="wrap">
+        <p class="chapter-num">05 · What you can do</p>
+        <h2>How do you use the road today?</h2>
+        <p class="body">Pick your role. You will see the numbers from this story that matter most to you, and what could reduce the harm. Actions for the road system and for drivers come first: people make mistakes, so roads and speeds should be designed so a mistake does not put someone in hospital.</p>
+        <div class="roles" id="roles" role="group" aria-label="Choose your role"></div>
+        <div class="role-panel" id="role-panel" tabindex="-1" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============ LIMITATIONS ============ -->
+    <section class="chapter" id="limits">
+      <div class="wrap">
+        <h2>About the data</h2>
+        <ul class="limits">
+          <li><strong>A hospitalisation is not a person.</strong> BITRE counts hospital separations; one person can be counted more than once.</li>
+          <li><strong>No fault.</strong> The data records what the injured person collided with, not who caused the crash.</li>
+          <li><strong>Series breaks.</strong> Victoria (from 2012) and NSW (from 2017) changed what counts as an admission, so 2012 and 2019 are used as comparison years.</li>
+          <li><strong>COVID.</strong> 2020 and 2021 travel was unusual and is shaded or excluded.</li>
+          <li><strong>No exposure data.</strong> We do not know how many people walk or cycle, so a rise in cyclist injuries may partly reflect more cycling.</li>
+          <li><strong>Who is missing.</strong> People killed at the scene are not in hospital data. Patients who died within 30 days are reported separately.</li>
+          <li><strong>Scope.</strong> First Nations data was left out: a narrow treatment without community context risked misrepresenting First Nations people.</li>
+        </ul>
+        <p class="chart-note">Data: Bureau of Infrastructure and Transport Research Economics (2023), <em>Hospitalised injury</em>; Australian Bureau of Statistics, <em>Regional population by age and sex</em> (LGA estimates). Prototype figures computed with <code>scripts/build_data.py</code>; final figures must come from the team's KNIME workflow.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap"><p>DataWerk · COS30045 Data Visualisation · web_proto_v1 (prototype) · Charts built with D3.js v7</p></div>
+  </footer>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
